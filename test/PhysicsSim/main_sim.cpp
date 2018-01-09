@@ -14,7 +14,7 @@ using namespace std;
 
 int main(int argc,char* argv[]) {
 
-	udp_comms* comms = new udp_comms(true, 8888, "192.168.1.148");
+	udp_comms* comms = new udp_comms(true, 8888, "192.168.1.147");
 //	udp_comms* comms = new udp_comms(true, 8888, "127.0.0.1");
 
 	if (!comms->conn())

@@ -27,9 +27,10 @@ private:
 
     bool m_bClient;
     unsigned int PORT;
+    std::string ip_address;
 
 public:
-    udp_comms(bool bClient, unsigned int port);
+    udp_comms(bool bClient, unsigned int port, std::string ip_addr);
     bool conn();
 
     bool receive_cassie_outputs(cassie_outputs_t* data);

@@ -9,9 +9,13 @@
 
 TestBenchInterface::TestBenchInterface() {
 	// TODO Auto-generated constructor stub
-	comms = new udp_comms(false, 8888);
-	comms_vis = new udp_comms(true, 8880);
-
+#ifdef EMBEDDED
+	comms = new udp_comms(false, 8888, "192.168.1.148");
+	comms_vis = new udp_comms(true, 8880, "192.168.1.148");
+#else
+	comms = new udp_comms(false, 8888, "127.0.0.1");
+	comms_vis = new udp_comms(true, 8880, "127.0.0.1");
+#endif
 	int contactIds[] = {0, 1};
 	int targetIds[] = {0, 1, 2};
 

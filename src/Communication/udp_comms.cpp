@@ -4,14 +4,14 @@
 
 using namespace std;
 
-#define SERVER "127.0.0.1"
 #define BUFLEN 512
 
-udp_comms::udp_comms(bool bClient, unsigned int port)
+udp_comms::udp_comms(bool bClient, unsigned int port, string ip_addr)
 {
 	m_bClient = bClient;
 	sock = -1;
 	PORT = port;
+	ip_address = ip_addr;
 }
 
 /**
@@ -41,7 +41,7 @@ bool udp_comms::client_conn()
 
 	server.sin_family = AF_INET;
 	server.sin_port = htons( PORT );
-	if (inet_aton(SERVER , &server.sin_addr) == 0)
+	if (inet_aton(ip_address.c_str() , &server.sin_addr) == 0)
 	{
 		printf("inet_aton() failed\n");
 		return false;
@@ -68,7 +68,7 @@ bool udp_comms::server_conn()
 	//	server.sin_addr.s_addr = htonl(INADDR_ANY);
 	server.sin_family = AF_INET;
 	server.sin_port = htons( PORT );
-	if (inet_aton(SERVER , &server.sin_addr) == 0)
+	if (inet_aton(ip_address.c_str() , &server.sin_addr) == 0)
 	{
 		printf("inet_aton() failed\n");
 		return false;

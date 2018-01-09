@@ -77,7 +77,7 @@ bool udp_comms::server_conn()
 	//pretty much the same as client but bind socket for server
 	if( bind(sock, (struct sockaddr*)&server, sizeof(server) ) == -1)
 	{
-		printf("failed to bind socket...\n");
+		printf("failed to bind socket... %s\n", strerror(errno));
 		return false;
 	}
 

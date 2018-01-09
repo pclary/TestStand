@@ -10,7 +10,7 @@
 TestBenchInterface::TestBenchInterface() {
 	// TODO Auto-generated constructor stub
 #ifdef EMBEDDED
-	comms = new udp_comms(false, 8888, "192.168.1.148");
+	comms = new udp_comms(false, 8888, "192.168.1.147");
 	comms_vis = new udp_comms(true, 8880, "192.168.1.148");
 #else
 	comms = new udp_comms(false, 8888, "127.0.0.1");
@@ -66,13 +66,14 @@ bool TestBenchInterface::Init() {
 bool TestBenchInterface::Run(ControlObjective cntrl)
 {
 	timespec ts, tf;
-	clock_gettime(CLOCK_REALTIME, &ts);
 
 	static int vis_tx_rate = 0;
 	int num_retries = 0;
 	while (!comms->receive_cassie_outputs(&sensors))
 		if (num_retries++ > 5)
 			return false;
+
+	clock_gettime(CLOCK_REALTIME, &ts);
 
 	CassieOutputsToState(&cassie, sensors, qpos, qvel);
 	cassie.setState(qpos, qvel);
@@ -109,6 +110,10 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 	bool bContact[] = {cntrl.bContact, cntrl.bContact};
 	osc->RunPTSC(&cassie, xdd, bActive, bContact, &u);
 
+	clock_gettime(CLOCK_REALTIME, &tf);
+	unsigned int diff_us = (diff(ts,tf).tv_nsec)/1e3;
+	printf("%u\n", diff_us);
+
 	TorqueToCassieInputs(u.data(), &command);
 
 	bool bTxSuccess = comms->send_cassie_inputs(command);
@@ -123,10 +128,6 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 	}
 
 	//add logging
-
-	clock_gettime(CLOCK_REALTIME, &tf);
-	unsigned int diff_us = (diff(ts,tf).tv_nsec)/1e3;
-	printf("%u\n", diff_us);
 
 	return bTxSuccess;
 }

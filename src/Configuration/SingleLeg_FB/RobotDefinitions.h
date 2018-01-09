@@ -23,7 +23,7 @@ static const double m_dControlTime_s = 0.0005; //how often the controller runs
 
 static const double m_dNominalZTarget_m = 0.95;
 
-#if EMBEDDED
+#ifdef EMBEDDED
 static const std::string xml_model_filename = "/home/robot/DRL/TestStand/src/Configuration/SingleLeg_FB/singleleg.xml";
 #else
 static const std::string xml_model_filename = "/home/tapgar/cuda-workspace/TestStand/src/Configuration/SingleLeg_FB/singleleg.xml";

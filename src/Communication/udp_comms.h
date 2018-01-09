@@ -7,7 +7,7 @@
 #include <arpa/inet.h> //inet_addr
 #include <netdb.h> //hostent
 #include "Command_Structs.h"
-
+#include <string>
 /**
     TCP Client class
 */

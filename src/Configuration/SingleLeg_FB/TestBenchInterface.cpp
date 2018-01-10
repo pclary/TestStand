@@ -66,6 +66,7 @@ bool TestBenchInterface::Init() {
 bool TestBenchInterface::Run(ControlObjective cntrl)
 {
 	timespec ts, tf;
+	clock_gettime(CLOCK_REALTIME, &ts);
 
 	static int vis_tx_rate = 0;
 	int num_retries = 0;
@@ -73,7 +74,6 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 		if (num_retries++ > 5)
 			return false;
 
-	clock_gettime(CLOCK_REALTIME, &ts);
 
 	CassieOutputsToState(&cassie, sensors, qpos, qvel);
 	cassie.setState(qpos, qvel);
@@ -112,7 +112,7 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 
 	clock_gettime(CLOCK_REALTIME, &tf);
 	unsigned int diff_us = (diff(ts,tf).tv_nsec)/1e3;
-	printf("%u\n", diff_us);
+//	printf("%u\n", diff_us);
 
 	TorqueToCassieInputs(u.data(), &command);
 

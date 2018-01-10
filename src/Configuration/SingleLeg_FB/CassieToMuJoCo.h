@@ -58,15 +58,7 @@ static void StateToCassieOutputs(double* qpos, double* qvel, cassie_out_t* senso
 	sensors->leftLeg.footJoint.position = qpos[4];
 	sensors->leftLeg.footJoint.velocity = qvel[4];
 
-
-//	sensors->motorPosition[1] = qpos[0];
-//	sensors->motorVelocity[1] = qvel[0];
-//	printf("%f,%f\n", qpos[5], qvel[5]);
-
-
-//	for(int i = 0; i < nQ; i++)
-//		printf("%f\t", qpos[i]);
-//	printf("\n");
+	printf("%f,%f\n", qpos[5], qvel[5]);
 }
 
 static void TorqueToCassieInputs(double* u, cassie_user_in_t* command)

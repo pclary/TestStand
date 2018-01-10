@@ -74,7 +74,7 @@ static void CassieOutputsToState(DynamicModel* dyn, cassie_out_t sensors, double
 //	qpos[0] = sensors.motorPosition[1];
 //	qvel[0] = sensors.motorVelocity[1];
 
-//	printf("%f,%f\n", qpos[5], qvel[5]);
+	printf("%f,%f\n", qpos[5], qvel[5]);
 
 //	if (x(5) < x(8))
 //	{

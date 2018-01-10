@@ -68,7 +68,7 @@ int main(int argc,char* argv[]) {
 			clock_gettime(CLOCK_REALTIME, &tf);
 			diff_us = (diff(ts,tf).tv_nsec)/1e3;
 		}
-		printf("%u\n", diff_us);
+//		printf("%u\n", diff_us);
 	}
 
 }

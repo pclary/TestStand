@@ -1,9 +1,10 @@
 #include "udp_comms.h"
 
+
 int main()
 {
 
-   udp_comms* comms = new udp_comms(true, 8001, "10.10.10.3");
+   udp_comms* comms = new udp_comms(false, 8001, "10.10.10.5");
 
    if (!comms->conn())
    {
@@ -11,13 +12,15 @@ int main()
       return -1;
    }
 
-   double data = 0.0;
+   printf("connected\n");
+
+
+   cassie_out_t sensors;
+
    while (true)
    {
-      comms->send_double(data);
-      comms->receive_double(&data);
-      printf("rx: %f\n", data);
-      data += 1.0;
+      comms->receive_cassie_outputs(&sensors);
+      printf("rx\n");
    }
 
    return 0;

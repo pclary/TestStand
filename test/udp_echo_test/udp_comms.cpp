@@ -1,6 +1,8 @@
 #include "udp_comms.h"
 #include <stdint.h>
 #include <cstring>
+#include "cassie_user_in_t.h"
+#include "cassie_out_t.h"
 
 using namespace std;
 
@@ -86,97 +88,87 @@ bool udp_comms::server_conn()
 
 }
 
-bool udp_comms::receive_double(double *rx)
-{
-	unsigned int numBytes = sizeof(double);
-	char buff[numBytes];
-	if (!receive(buff, numBytes))
-		return false;
-
-	memcpy(rx, buff, numBytes);
-
-	return true;
-}
-
-bool udp_comms::send_double(double tx)
-{
-	unsigned int numBytes = sizeof(double);
-	char buff[numBytes];
-
-	memcpy(buff, &tx, numBytes);
-	if (!send(buff, numBytes))
-		return false;
-
-	return true;
-}
+//bool udp_comms::receive_double(double *rx)
+//{
+//	unsigned int numBytes = sizeof(double);
+//	char buff[numBytes];
+//	if (!receive(buff, numBytes))
+//		return false;
+//
+//	memcpy(rx, buff, numBytes);
+//
+//	return true;
+//}
+//
+//bool udp_comms::send_double(double tx)
+//{
+//	unsigned int numBytes = sizeof(double);
+//	char buff[numBytes];
+//
+//	memcpy(buff, &tx, numBytes);
+//	if (!send(buff, numBytes))
+//		return false;
+//
+//	return true;
+//}
 
 
 /**
     Receive data from the connected host
  */
-bool udp_comms::receive_cassie_outputs(cassie_outputs_t* data)
+bool udp_comms::receive_cassie_outputs(cassie_out_t* data)
 {
-	unsigned int numBytes = sizeof(cassie_outputs_t);
-	char buff[numBytes];
+	unsigned int numBytes = sizeof(cassie_out_t);
+	unsigned char buff[numBytes];
 
 	if (!receive(buff, numBytes))
 		return false;
 
-//	printf("received outputs\n");
-
-	memcpy(data, buff, numBytes);
+	unpack_cassie_out_t(buff, data);
 
 	return true;
 }
 
-bool udp_comms::send_cassie_outputs(cassie_outputs_t data) {
+bool udp_comms::send_cassie_outputs(cassie_out_t data) {
 
-	unsigned int numBytes = sizeof(cassie_outputs_t);
-	char buff[numBytes];
+	unsigned int numBytes = sizeof(cassie_out_t);
+	unsigned char buff[numBytes];
 
-	//convert byte order?
+	pack_cassie_out_t(&data, buff);
 
-	memcpy(buff, &data, numBytes);
 	if (!send(buff, numBytes))
 		return false;
 
-//	printf("sent outputs\n");
-
 	return true;
 }
 
-bool udp_comms::receive_cassie_inputs(cassie_inputs_t* data)
+bool udp_comms::receive_cassie_inputs(cassie_user_in_t* data)
 {
-	unsigned int numBytes = sizeof(cassie_inputs_t);
-	char buff[numBytes];
+	unsigned int numBytes = sizeof(cassie_user_in_t);
+	unsigned char buff[numBytes];
 
 	if (!receive(buff, numBytes))
 		return false;
 
-//	printf("received inputs\n");
-
-	memcpy(data, buff, numBytes);
+	unpack_cassie_user_in_t(buff, data);
 
 	return true;
 }
 
-bool udp_comms::send_cassie_inputs(cassie_inputs_t data) {
+bool udp_comms::send_cassie_inputs(cassie_user_in_t data) {
 
-	unsigned int numBytes = sizeof(cassie_inputs_t);
-	char buff[numBytes];
+	unsigned int numBytes = sizeof(cassie_user_in_t);
+	unsigned char buff[numBytes];
 
-	//convert byte order?
+	pack_cassie_user_in_t(&data, buff);
 
-	memcpy(buff, &data, numBytes);
 	if (!send(buff, numBytes))
 		return false;
 
-//	printf("sent inputs\n");
-
 	return true;
 }
 
-bool udp_comms::receive(char* buff, unsigned int num_bytes)
+bool udp_comms::receive(unsigned char* buff, unsigned int num_bytes)
 {
 	socklen_t rcv_len = num_bytes;
 	//Receive a reply from the server
@@ -203,7 +195,7 @@ bool udp_comms::receive(char* buff, unsigned int num_bytes)
 /*
     Send data to the connected host
  */
-bool udp_comms::send(char* buff, unsigned int numBytes)
+bool udp_comms::send(unsigned char* buff, unsigned int numBytes)
 {
 	if (!m_bClient)
 	{

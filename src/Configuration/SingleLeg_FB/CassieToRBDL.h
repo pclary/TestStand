@@ -12,16 +12,20 @@
 #include "RobotDefinitions.h"
 #include <rbdl/rbdl.h>
 
-static void CassieOutputsToState(DynamicModel* dyn, cassie_outputs_t sensors, double* qpos, double* qvel)
+static void CassieOutputsToState(DynamicModel* dyn, cassie_out_t sensors, double* qpos, double* qvel)
 {
 	//update directly measured states
-	for (int i = 0; i < nU; i++)
-	{
-		qpos[i+1] = sensors.motorPosition[i+2];
-		qvel[i+1] = sensors.motorVelocity[i+2];
-	}
-	qpos[4] = sensors.jointPosition[1];
-	qvel[4] = sensors.jointVelocity[1];
+	qpos[1] = sensors.leftLeg.hipPitchDrive.position;
+	qvel[1] = sensors.leftLeg.hipPitchDrive.velocity;
+
+	qpos[2] = sensors.leftLeg.kneeDrive.position;
+	qvel[2] = sensors.leftLeg.kneeDrive.velocity;
+
+	qpos[3] = sensors.leftLeg.tarsusJoint.position;
+	qvel[3] = sensors.leftLeg.tarsusJoint.velocity;
+
+	qpos[4] = sensors.leftLeg.footJoint.position;
+	qvel[4] = sensors.leftLeg.footJoint.velocity;
 
 	//qpos4
 	qpos[5] = qpos[0] = 0.0;
@@ -89,24 +93,28 @@ static void CassieOutputsToState(DynamicModel* dyn, cassie_outputs_t sensors, do
 
 }
 
-static void StateToCassieOutputs(double* qpos, double* qvel, cassie_outputs_t* sensors)
+static void StateToCassieOutputs(double* qpos, double* qvel, cassie_out_t* sensors)
 {
-	for (int i = 0; i < nU; i++)
-	{
-		sensors->motorPosition[i+2] = qpos[i+1];
-		sensors->motorVelocity[i+2] = qvel[i+1];
-	}
-	sensors->jointPosition[1] = qpos[4];
-	sensors->jointVelocity[1] = qvel[4];
+	sensors->leftLeg.hipPitchDrive.position = qpos[1];
+	sensors->leftLeg.hipPitchDrive.velocity = qvel[1];
+
+	sensors->leftLeg.kneeDrive.position = qpos[2];
+	sensors->leftLeg.kneeDrive.velocity = qvel[2];
+
+	sensors->leftLeg.tarsusJoint.position = qpos[3];
+	sensors->leftLeg.tarsusJoint.velocity = qvel[3];
+
+	sensors->leftLeg.footJoint.position = qpos[4];
+	sensors->leftLeg.footJoint.velocity = qvel[4];
 }
 
-static void TorqueToCassieInputs(double* u, cassie_inputs_t* command)
+static void TorqueToCassieInputs(double* u, cassie_user_in_t* command)
 {
 	for (int i = 2; i < 2+nU; i++)
 		command->torque[i] = u[i-2];
 }
 
-static void CassieInputsToTorque(cassie_inputs_t command, double* u)
+static void CassieInputsToTorque(cassie_user_in_t command, double* u)
 {
 	for (int i = 2; i < 2+nU; i++)
 		u[i-2] = command.torque[i];

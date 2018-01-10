@@ -14,8 +14,8 @@ using namespace std;
 
 int main(int argc,char* argv[]) {
 
-	udp_comms* comms = new udp_comms(true, 8888, "192.168.1.147");
-//	udp_comms* comms = new udp_comms(true, 8888, "127.0.0.1");
+//	udp_comms* comms = new udp_comms(true, 8888, "192.168.1.147");
+	udp_comms* comms = new udp_comms(true, 8888, "127.0.0.1");
 
 	if (!comms->conn())
 	{
@@ -42,8 +42,8 @@ int main(int argc,char* argv[]) {
 	mj_forward(mj_Model, mj_Data);
 
 
-	cassie_inputs_t command;
-	cassie_outputs_t sensors;
+	cassie_user_in_t command;
+	cassie_out_t sensors;
 
 	//initiate comms
 	StateToCassieOutputs(mj_Data->qpos, mj_Data->qvel, &sensors);

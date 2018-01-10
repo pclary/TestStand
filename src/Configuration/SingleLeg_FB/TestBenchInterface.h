@@ -49,8 +49,8 @@ private:
 	udp_comms* comms;
 	udp_comms* comms_vis;
 
-	cassie_outputs_t sensors;
-	cassie_inputs_t command;
+	cassie_out_t sensors;
+	cassie_user_in_t command;
 
 	PD_CONTROLLER PD_footX;
 	PD_CONTROLLER PD_footZ;

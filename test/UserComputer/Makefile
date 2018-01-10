@@ -6,6 +6,7 @@ HEADDIR := /home/robot/DRL/TestStand
 SRCDIR := $(HEADDIR)/src
 COMMONDIR := $(SRCDIR)/Common
 COMMDIR := $(SRCDIR)/Communication
+COMMLIBDIR := $(COMMDIR)/CoalesceCodegen
 CTRLDIR := $(SRCDIR)/Control
 CONFIGDIR := $(SRCDIR)/Configuration
 MODPINDIR := $(CONFIGDIR)/SingleLeg_Pinned
@@ -24,11 +25,11 @@ MAINOBJS = $(SRCDIR)/DynamicModel.o \
 OBJS = $(MAINOBJS)
 
 # libraries
-SHAREDLIBS = -lm
-MAINLIBS = -L$(QPDIR)/bin -L$(RBDLDIR)/build -lrbdl -lqpOASES $(QPDIR)/src/LAPACKReplacement.o $(QPDIR)/src/BLASReplacement.o $(SHAREDLIBS)
+SHAREDLIBS = -lm -L$(COMMLIBDIR) -lCassieUDP
+MAINLIBS = -L$(QPDIR)/bin -L$(RBDLDIR)/build -L$(COMMLIBDIR) -lrbdl -lqpOASES $(QPDIR)/src/LAPACKReplacement.o $(QPDIR)/src/BLASReplacement.o $(SHAREDLIBS)
 
 # Additional flags for compilation (e.g., include flags)
-SHAREDINCFLAGS = -I$(SRCDIR) -I$(COMMONDIR) -I$(COMMDIR) -I$(CTRLDIR) -I$(CONFIGDIR) -I$(EIGENDIR)
+SHAREDINCFLAGS = -I$(SRCDIR) -I$(COMMONDIR) -I$(COMMDIR) -I$(COMMLIBDIR) -I$(CTRLDIR) -I$(CONFIGDIR) -I$(EIGENDIR)
 MAININCFLAGS = -I$(QPDIR)/include -I$(RBDLDIR)/src -I$(RBDLDIR)/include -I$(RBDLDIR)/build/include $(SHAREDINCFLAGS)
 
 ##########################################################################
@@ -40,7 +41,7 @@ MAININCFLAGS = -I$(QPDIR)/include -I$(RBDLDIR)/src -I$(RBDLDIR)/include -I$(RBDL
 CXX = g++
 
 # C++ Compiler options
-CXXFLAGS = -std=c++11 -O3 -pipe -DNDEBUG -Wparentheses -Wreturn-type -Wpointer-arith -Wwrite-strings -Wno-unknown-pragmas -Wno-long-long -fPIC -DLINUX -D__USE_LONG_INTEGERS__ -D__USE_LONG_FINTS__ -DSOLVER_NONE -D__NO_COPYRIGHT__ -DEMBEDDED
+CXXFLAGS = -std=c++11 -O3 -pipe -DNDEBUG -Wl,-rpath,$(COMMLIBDIR) -Wparentheses -Wreturn-type -Wpointer-arith -Wwrite-strings -Wno-unknown-pragmas -Wno-long-long -fPIC -DLINUX -D__USE_LONG_INTEGERS__ -D__USE_LONG_FINTS__ -DSOLVER_NONE -D__NO_COPYRIGHT__ -DEMBEDDED
 
 # The following is necessary under cygwin, if native compilers are used
 CYGPATH_W = echo

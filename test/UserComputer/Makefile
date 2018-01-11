@@ -1,8 +1,9 @@
-QPDIR := /home/robot/DRL/ThirdParty/qpOASES-3.2.1
-EIGENDIR := /home/robot/DRL/ThirdParty/eigen
-RBDLDIR := /home/robot/DRL/ThirdParty/rbdl
+HOMEDIR := /home/drl/workspace
+QPDIR := $(HOMEDIR)/ThirdParty/qpOASES-3.2.1
+EIGENDIR := $(HOMEDIR)/ThirdParty/eigen
+RBDLDIR := $(HOMEDIR)/ThirdParty/rbdl
 
-HEADDIR := /home/robot/DRL/TestStand
+HEADDIR := $(HOMEDIR)/TestStand
 SRCDIR := $(HEADDIR)/src
 COMMONDIR := $(SRCDIR)/Common
 COMMDIR := $(SRCDIR)/Communication
@@ -41,7 +42,7 @@ MAININCFLAGS = -I$(QPDIR)/include -I$(RBDLDIR)/src -I$(RBDLDIR)/include -I$(RBDL
 CXX = g++
 
 # C++ Compiler options
-CXXFLAGS = -std=c++11 -O3 -pipe -DNDEBUG -Wl,-rpath,$(COMMLIBDIR) -Wparentheses -Wreturn-type -Wpointer-arith -Wwrite-strings -Wno-unknown-pragmas -Wno-long-long -fPIC -DLINUX -D__USE_LONG_INTEGERS__ -D__USE_LONG_FINTS__ -DSOLVER_NONE -D__NO_COPYRIGHT__ -DEMBEDDED
+CXXFLAGS = -std=c++11 -O3 -pipe -DNDEBUG -Wl,-rpath,$(COMMLIBDIR),-rpath,$(RBDLDIR)/build,-rpath,$(QPDIR)/bin -Wparentheses -Wreturn-type -Wpointer-arith -Wwrite-strings -Wno-unknown-pragmas -Wno-long-long -fPIC -DLINUX -D__USE_LONG_INTEGERS__ -D__USE_LONG_FINTS__ -DSOLVER_NONE -D__NO_COPYRIGHT__ -DEMBEDDED
 
 # The following is necessary under cygwin, if native compilers are used
 CYGPATH_W = echo

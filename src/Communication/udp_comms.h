@@ -6,8 +6,8 @@
 #include <sys/socket.h>    //socket
 #include <arpa/inet.h> //inet_addr
 #include <netdb.h> //hostent
-#include "cassie_out_t_types.h"
-#include "cassie_user_in_t_types.h"
+#include "Command_Structs.h"
+#include "SharedRobotDefinitions.h"
 #include <string>
 /**
     TCP Client class
@@ -39,9 +39,11 @@ public:
 
     bool receive_cassie_outputs(cassie_out_t* data);
     bool receive_cassie_inputs(cassie_user_in_t* data);
+    bool receive_telemetry(telemetry_t* t);
 
     bool send_cassie_inputs(cassie_user_in_t data);
     bool send_cassie_outputs(cassie_out_t data);
+    bool send_telemetry(telemetry_t t);
 
 };
 

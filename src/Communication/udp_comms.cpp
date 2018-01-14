@@ -168,6 +168,32 @@ bool udp_comms::send_cassie_inputs(cassie_user_in_t data) {
 	return true;
 }
 
+bool udp_comms::send_telemetry(telemetry_t t)
+{
+	unsigned int numBytes = sizeof(telemetry_t);
+	unsigned char buff[numBytes];
+
+	memcpy(buff, &t, numBytes);
+
+	if (!send(buff, numBytes))
+		return false;
+
+	return true;
+}
+
+bool udp_comms::receive_telemetry(telemetry_t* t)
+{
+	unsigned int numBytes = sizeof(telemetry_t);
+	unsigned char buff[numBytes];
+
+	if (!receive(buff, numBytes))
+		return false;
+
+	memcpy(t, buff, numBytes);
+
+	return true;
+}
+
 bool udp_comms::receive(unsigned char* buff, unsigned int num_bytes)
 {
 	socklen_t rcv_len = num_bytes;

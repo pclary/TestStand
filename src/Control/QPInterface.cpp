@@ -50,7 +50,7 @@ bool QP_Interface::Solve(double* H_, double* g_, double* CE_, double* ce_,
 		ub[i] = ub_[i];
 
 	if (bFirstCall)
-		eRet = qp->init(H, g, A, lb, ub, lbA, ubA, nWSR, 0);
+		eRet = qp->init(H_, g, A, lb, ub, lbA, ubA, nWSR, 0);
 	else
 		eRet = qp->hotstart(H, g, A, lb, ub, lbA, ubA, nWSR, 0);
 

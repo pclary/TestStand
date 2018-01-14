@@ -8,7 +8,7 @@
 #ifndef OSC_RBDL_H_
 #define OSC_RBDL_H_
 
-#include "QPInterface.h" //required for QP
+#include <qpOASES.hpp>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <Eigen/QR>
@@ -16,18 +16,19 @@
 #include "HelperFunctions.h"
 #include "SharedRobotDefinitions.h"
 #include "DynamicModel.h"
+#include "DynamicState.h"
 
 
 class OSC_RBDL {
 
 public:
-	OSC_RBDL(int* conIds, int* targIds);
+	OSC_RBDL(int* targIds);
 
-	void RunPTSC(DynamicModel* dyn, Eigen::Matrix<double, DOF*XDD_TARGETS+QDD_TARGETS, 1> xdd, Eigen::Matrix<bool, DOF*XDD_TARGETS+QDD_TARGETS, 1> bActive, bool* bContact, Eigen::Matrix<double, nU, 1>* u);
+	void RunPTSC(DynamicModel* dyn, DynamicState* dyn_state, Eigen::Matrix<double, DOF*XDD_TARGETS+QDD_TARGETS, 1> xdd, Eigen::Matrix<bool, DOF*XDD_TARGETS+QDD_TARGETS, 1> bActive, bool* bContact, Eigen::Matrix<double, nU, 1>* u);
 
 	int AddQDDIdx(int idx) {
 
-		if (m_nAssignedIndices == QDD_TARGETS || idx < 0 || idx >= nQ)
+		if (m_nAssignedIndices == QDD_TARGETS || idx < 0 || idx >= nQstiff)
 			return 1;
 		qdd_targ_idx[m_nAssignedIndices] = idx;
 		m_nAssignedIndices++;
@@ -39,11 +40,14 @@ public:
 
 private:
 
-	QP_Interface m_qp;
+	qpOASES::SQProblem* qp; //for QPs where H or A may change
+	qpOASES::Options qpOptions;
 
 	void GetMotorLimits(DynamicModel* dyn, Eigen::MatrixXd* mlb, Eigen::MatrixXd* mub);
 
-	void UpdateMatricesAtState(DynamicModel* dyn);
+	bool SolveQP(double* H_, double* g_, double* CE_, double* ce_,
+			double* C_, double* cilb_, double* ciub_,
+			double* lb_, double* ub_, double* x_res);
 
 	Eigen::MatrixXd M; //Mass matrix
 	Eigen::VectorXd bias; //coriolis, grav, spring
@@ -54,31 +58,33 @@ private:
 	Eigen::MatrixXd Jeq; //constrian jacobian
 	Eigen::VectorXd JeqdotQdot;
 
-	Eigen::Matrix<double, nQ, nQ> Nc; //constraint projector
-	Eigen::Matrix<double, nQ, 1> gamma; //
+	Eigen::Matrix<double, nQstiff, nQstiff> Nc; //constraint projector
+	Eigen::Matrix<double, nQstiff, 1> gamma; //
 
 	Eigen::Matrix<double, nCON*DOF, nCON*(2*(DOF-1)+1)> V; //friction cone
 
-	Eigen::Matrix<double, nQ+nU+nCON*(2*(DOF-1)+1), 1> x;//open vars
+	Eigen::Matrix<double, nQstiff+nU+nCON*(2*(DOF-1)+1), 1> x;//open vars
 
 	Eigen::Matrix<double, XDD_TARGETS*DOF + QDD_TARGETS, XDD_TARGETS*DOF + QDD_TARGETS> W; //QP weighting matrix
 
 	//QP matrices
 	// z = 0.5*x'Hx + g'x;
-	Eigen::Matrix<double, nQ+nU+nCON*(2*(DOF-1)+1), nQ+nU+nCON*(2*(DOF-1)+1), Eigen::RowMajor> H;//hessian
-	Eigen::Matrix<double, 1, nQ+nU+nCON*(2*(DOF-1)+1), Eigen::RowMajor> gt; //jacobian
+	Eigen::Matrix<double, nQstiff+nU+nCON*(2*(DOF-1)+1), nQstiff+nU+nCON*(2*(DOF-1)+1), Eigen::RowMajor> H;//hessian
+	Eigen::Matrix<double, 1, nQstiff+nU+nCON*(2*(DOF-1)+1), Eigen::RowMajor> gt; //jacobian
 	//Equality constraints
 	//Ax = b
-	Eigen::Matrix<double, nQ, nQ+nU+nCON*(2*(DOF-1)+1), Eigen::RowMajor> CE;
-	Eigen::Matrix<double, nQ, 1> ce;
+	Eigen::Matrix<double, nQstiff, nQstiff+nU+nCON*(2*(DOF-1)+1), Eigen::RowMajor> CE;
+	Eigen::Matrix<double, nQstiff, 1> ce;
 	//Inequality constraints
 	//d <= Cx <= f
-	Eigen::Matrix<double, nCON*4*(DOF-1), nQ+nU+nCON*(2*(DOF-1)+1), Eigen::RowMajor> C;
+	Eigen::Matrix<double, nCON*4*(DOF-1), nQstiff+nU+nCON*(2*(DOF-1)+1), Eigen::RowMajor> C;
 	Eigen::Matrix<double, nCON*4*(DOF-1), 1> cilb;
 	Eigen::Matrix<double, nCON*4*(DOF-1), 1> ciub;
 	//Upper/Lower bounds
-	Eigen::Matrix<double, nQ+nU+nCON*(2*(DOF-1)+1), 1> ub;
-	Eigen::Matrix<double, nQ+nU+nCON*(2*(DOF-1)+1), 1> lb;
+	Eigen::Matrix<double, nQstiff+nU+nCON*(2*(DOF-1)+1), 1> ub;
+	Eigen::Matrix<double, nQstiff+nU+nCON*(2*(DOF-1)+1), 1> lb;
+
+	int targetSiteIds[XDD_TARGETS];
 
 	int qdd_targ_idx[QDD_TARGETS];
 	int m_nAssignedIndices;
@@ -90,11 +96,6 @@ private:
 	static constexpr double m_dWeight_Tau = 1e-6;//0.000002;
 	static constexpr double m_dWeight_Fx = 1e-4;
 	static constexpr double m_dWeight_Fz = 1e-4;
-
-	int contactSiteIds[nCON];
-	int targetSiteIds[XDD_TARGETS];
-	int* contactBodyIds;
-
 };
 
 

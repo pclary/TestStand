@@ -39,6 +39,7 @@ private:
 	void UpdateStateEstimate();
 
 	DynamicModel cassie;
+	DynamicState dyn_state;
 	OSC_RBDL* osc;
 
 	udp_comms* comms;

@@ -60,6 +60,11 @@ public:
 	void GetTargetPoints(RigidBodyDynamics::Math::VectorNd* x, RigidBodyDynamics::Math::VectorNd* xd);
 
 	void GetConstraintPointsDependent(RigidBodyDynamics::Math::VectorNd* x, RigidBodyDynamics::Math::VectorNd* constraint_base_pose);
+
+	double GetMass() { return m_TotalMass_kg; }
+
+	bool IsSpringJoint(int idx) { return jointStiffness(idx,0) > 0.0; }
+
 private:
 
 	RigidBodyDynamics::Model m;
@@ -68,12 +73,15 @@ private:
 	RigidBodyDynamics::Math::MatrixNd rotorInertia;
 	RigidBodyDynamics::Math::MatrixNd selectorMatrix;
 	RigidBodyDynamics::Math::VectorNd jointDamping;
+	RigidBodyDynamics::Math::VectorNd jointStiffness;
 	RigidBodyDynamics::Math::VectorNd jointReference;
 
 	RigidBodyDynamics::Math::MatrixNd motorLimits;
 
 	std::vector<Site> m_Sites;
 	std::vector<Constraint> m_Constraints;
+
+	double m_TotalMass_kg;
 
 };
 

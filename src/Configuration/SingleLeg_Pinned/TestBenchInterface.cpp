@@ -20,7 +20,9 @@ TestBenchInterface::TestBenchInterface() {
 	int contactIds[] = {0, 1};
 	int targetIds[] = {0, 1};
 
-	osc = new OSC_RBDL(contactIds, targetIds);
+	dyn_state.Init(contactIds);
+
+	osc = new OSC_RBDL(targetIds);
 
 	for (int i = 0; i < DOF*XDD_TARGETS; i++)
 		bActive(i,0) = true;
@@ -75,6 +77,8 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 	CassieOutputsToState(&cassie, sensors, qpos, qvel);
 	cassie.setState(qpos, qvel);
 
+	dyn_state.UpdateDynamicState(&cassie);
+
 	Eigen::Matrix<double, nU, 1> u = Eigen::Matrix<double, nU, 1>::Zero();
 	Eigen::Matrix<double, DOF*XDD_TARGETS, 1> x_t = Eigen::Matrix<double, DOF*XDD_TARGETS, 1>::Zero();
 	Eigen::Matrix<double, DOF*XDD_TARGETS, 1> xd_t = Eigen::Matrix<double, DOF*XDD_TARGETS, 1>::Zero();
@@ -99,7 +103,7 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 	xdd(5) = PD_footZ.Kp*(x_t(5) - x(5)) + PD_footZ.Kd*(xd_t(5) - xd(5)) + cntrl.footAcc[1];
 
 	bool bContact[] = {false, false};
-	osc->RunPTSC(&cassie, xdd, bActive, bContact, &u);
+	osc->RunPTSC(&cassie, &dyn_state, xdd, bActive, bContact, &u);
 
 	TorqueToCassieInputs(u.data(), &command);
 
@@ -109,8 +113,22 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 	{
 		if (vis_tx_rate++ > 20)
 		{
+
+			telemetry_t telem;
+			for (int i = 0; i < nQ; i++)
+				telem.qpos[i] = qpos[i];
+			for (int i = 0; i < nU; i++)
+				telem.torques[i] = u(i,0);
+			for (int i = 0; i < XDD_TARGETS*DOF; i++)
+			{
+				telem.accels[i] = xdd(i);
+				telem.targ_pos[i] = x_t(i);
+//				printf("%f\t", x_t(i));
+			}
+//			printf("\n");
+
 			vis_tx_rate = 0;
-			comms_vis->send_cassie_outputs(sensors);
+			comms_vis->send_telemetry(telem);
 		}
 	}
 

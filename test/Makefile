@@ -27,6 +27,7 @@ PHYSOBJS = $(PHYSDIR)/main_sim.o \
 	$(COMMDIR)/udp_comms.o
 	
 MAINOBJS = $(SRCDIR)/DynamicModel.o \
+	$(SRCDIR)/DynamicState.o \
 	$(CTRLDIR)/OSC_RBDL.o \
 	$(CTRLDIR)/QPInterface.o \
 	$(COMMDIR)/udp_comms.o
@@ -59,7 +60,7 @@ CXXFLAGS = -std=c++11 -O3 -pipe -DNDEBUG -Wl,-rpath,$(COMMLIBDIR) -Wparentheses 
 # The following is necessary under cygwin, if native compilers are used
 CYGPATH_W = echo
 
-all: main
+all: pinned
 
 .SUFFIXES: .cpp .c .o .obj
 

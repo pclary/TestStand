@@ -12,7 +12,7 @@ using namespace RigidBodyDynamics::Math;
 
 DynamicModel::DynamicModel() {
 	// TODO Auto-generated constructor stub
-
+	m_TotalMass_kg = 0.0;
 }
 
 DynamicModel::~DynamicModel() {
@@ -35,6 +35,7 @@ void DynamicModel::LoadModel(std::string xml_file) {
 	Matrix3d rot;
 
 	jointDamping = VectorNd::Zero(nQ);
+	jointStiffness = VectorNd::Zero(nQ);
 	selectorMatrix = MatrixNd::Zero(nQ, nU);
 	motorLimits = MatrixNd::Zero(nU,2);
 	jointReference = VectorNd::Zero(nQ);
@@ -56,6 +57,7 @@ void DynamicModel::LoadModel(std::string xml_file) {
 			rotor_inertia.push_back(bodies[i].joints[j].armature);
 			ref.push_back(bodies[i].joints[j].ref);
 			jointDamping(ref.size()-1) = bodies[i].joints[j].damping;
+			jointStiffness(ref.size()-1) = bodies[i].joints[j].stiffness;
 			jointReference(ref.size()-1) = bodies[i].joints[j].ref;
 		}
 
@@ -104,6 +106,8 @@ void DynamicModel::LoadModel(std::string xml_file) {
 		}
 
 		Body body = Body(bodies[i].I.mass, com, I);
+
+		m_TotalMass_kg += bodies[i].I.mass;
 
 		SpatialTransform tf(rot.transpose(), pos);
 

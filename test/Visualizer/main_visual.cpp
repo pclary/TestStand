@@ -47,16 +47,22 @@ int main(int argc,char* argv[]) {
 
 	Visualizer* vis = new Visualizer(mj_Model, bSaveVid, "remote_cassie");
 
-	cassie_out_t sensors;
+	telemetry_t telem;
 
 	while (true) {
-		comms->receive_cassie_outputs(&sensors);
-		CassieOutputsToState(mj_Model, mj_Data, sensors, mj_Data->qpos, mj_Data->qvel);
+		comms->receive_telemetry(&telem);
+		for (int i = 0; i < nQ; i++)
+			mj_Data->qpos[i] = telem.qpos[i];
+
 		mj_forward(mj_Model, mj_Data);
+//		for (int i = 0; i < XDD_TARGETS*DOF; i++)
+//			printf("%f\t", telem.targ_pos[i]);
+//		printf("\n");
 
 //		for (int i = 0; i < nQ; i++)
 //			printf("%f\t%f\n", mj_Data->qpos[i], mj_Data->qvel[i]);
-		vis->Draw(mj_Data);
+		vis->DrawPinned(mj_Data, telem);
+//		vis->Draw(mj_Data);
 	}
 
 }

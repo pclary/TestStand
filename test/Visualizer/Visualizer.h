@@ -39,6 +39,7 @@ public:
 	void Keyboard(int key, int scancode, int act, int mods);
 
 	bool Draw(mjData* data);
+	bool DrawPinned(mjData* data, telemetry_t t);
 	void DrawWithPoints(mjData* data, vector<Vector3d> pts);
 
 	void profilerUpdateXDD(Eigen::Matrix<double, DOF*XDD_TARGETS+QDD_TARGETS, 1> xdd, Eigen::Matrix<double, DOF*XDD_TARGETS+QDD_TARGETS, 1> xdd_target, Eigen::Matrix<double, DOF*XDD_TARGETS+QDD_TARGETS, 1> xdd_e);
@@ -133,6 +134,8 @@ private:
 	mjvFigure figCOMXY;
 	mjvFigure figCOMXZ;
 	mjvFigure figMPC;
+	mjvFigure figTorque;
+	mjvFigure figXDD;
 
 	GLFWwindow* m_Window;
 	GLFWwindow* m_FigWindow;

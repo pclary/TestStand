@@ -346,6 +346,10 @@ void Visualizer::profilerInit()
 	mjv_defaultFigure(&figMPC);
 
 
+	mjv_defaultFigure(&figXDD);
+	mjv_defaultFigure(&figTorque);
+
+
 	//title
 	strcpy(figCOMxdd.title, "COM xdd");
 	strcpy(figRightxdd.title, "Right xdd");
@@ -358,6 +362,9 @@ void Visualizer::profilerInit()
 	strcpy(figQddB.title, "Qdd Body");
 	strcpy(figQddL.title, "Qdd Left");
 	strcpy(figQddR.title, "Qdd Right");
+
+	strcpy(figXDD.title, "XDD");
+	strcpy(figTorque.title, "Torque");
 
 	strcpy(figMPC.title, "MPC Stats");
 
@@ -376,6 +383,8 @@ void Visualizer::profilerInit()
 	strcpy(figMPC.xlabel, "time");
 	strcpy(figCOMXY.xlabel, "X");
 	strcpy(figCOMXZ.xlabel, "X");
+	strcpy(figTorque.xlabel, "time");
+	strcpy(figXDD.xlabel, "time");
 
 	//y-tick number format
 	strcpy(figCOMxdd.yformat, "%.4f");
@@ -392,6 +401,8 @@ void Visualizer::profilerInit()
 	strcpy(figCOMXZ.yformat, "%.4f");
 	strcpy(figCOMXY.yformat, "%.4f");
 	strcpy(figMPC.yformat, "%.2f");
+	strcpy(figXDD.yformat, "%.2f");
+	strcpy(figTorque.yformat, "%.2f");
 
 	//labels
 	if (DOF == 2)
@@ -539,6 +550,10 @@ void Visualizer::profilerInit()
 	figCOMXY.gridsize[1] = 5;
 	figCOMXZ.gridsize[0] = 5;
 	figCOMXZ.gridsize[1] = 5;
+	figXDD.gridsize[0] = 5;
+	figXDD.gridsize[1] = 5;
+	figTorque.gridsize[0] = 5;
+	figTorque.gridsize[1] = 5;
 
 	//ranges
 	figCOMxdd.range[0][0] = -20;
@@ -599,6 +614,10 @@ void Visualizer::profilerInit()
 	figMPC.range[1][0] = 0;
 	figMPC.range[1][1] = 100;
 
+	figTorque.range[0][0] = -200;
+	figTorque.range[0][1] = 0;
+	figXDD.range[1][0] = 0;
+	figXDD.range[1][1] = 100;
 
 
 
@@ -619,6 +638,8 @@ void Visualizer::profilerInit()
 			figQddL.linedata[n][2*i] = (float)-i;
 			figQddR.linedata[n][2*i] = (float)-i;
 			figMPC.linedata[n][2*i] = (float)-i;
+			figTorque.linedata[n][2*i] = (float)-i;
+			figXDD.linedata[n][2*i] = (float)-i;
 		}
 	}
 
@@ -1198,6 +1219,122 @@ void Visualizer::SetMPCDisplay(int run_time) {
 	}
 
 
+}
+
+bool Visualizer::DrawPinned(mjData* data, telemetry_t t)
+{
+	if (!m_Window)
+		return false;
+
+	float dMax = -10000;
+	float dMin = 10000;
+	int pnt = mjMIN(201, figXDD.linepnt[0]+1);
+	for (int n = 0; n < XDD_TARGETS*DOF; n++)
+	{
+		for (int i = pnt - 1; i > 0; i--)
+		{
+			figXDD.linedata[n][2*i+1] = figXDD.linedata[n][2*i-1];
+			dMax = max(figXDD.linedata[n][2*i+1], dMax);
+			dMin = min(figXDD.linedata[n][2*i+1], dMin);
+		}
+		figXDD.linepnt[n] = pnt;
+		figXDD.linedata[n][1] = t.accels[n];
+	}
+	figXDD.range[1][0] = dMin - 0.1*fabs(dMin);
+	figXDD.range[1][1] = dMax + 0.1*fabs(dMax);
+
+	dMax = -10000;
+	dMin = 10000;
+	pnt = mjMIN(201, figTorque.linepnt[0]+1);
+	for (int n = 0; n < nU; n++)
+	{
+		for (int i = pnt - 1; i > 0; i--)
+		{
+			figTorque.linedata[n][2*i+1] = figTorque.linedata[n][2*i-1];
+			dMax = max(figTorque.linedata[n][2*i+1], dMax);
+			dMin = min(figTorque.linedata[n][2*i+1], dMin);
+		}
+		figTorque.linepnt[n] = pnt;
+		figTorque.linedata[n][1] = t.torques[n];
+	}
+	figTorque.range[1][0] = dMin - 0.1*fabs(dMin);
+	figTorque.range[1][1] = dMax + 0.1*fabs(dMax);
+
+
+
+	static int frame = 0;
+	timespec ts;
+	static timespec tf;
+	static bool bFirstTime = true;
+
+    clock_gettime(CLOCK_REALTIME, &ts);
+    double freq = 1e9/double(diff(ts,tf).tv_nsec);
+    if (freq > max_frame_rate && !bFirstTime)
+    	return false;
+    bFirstTime = false;
+    clock_gettime(CLOCK_REALTIME, &tf);
+
+
+//	if (frame++ <= 34 && !bWaitForUserFeedback && !m_bSaveVideo)
+//		return false;
+	frame = 0;
+	bool doOnce = true;
+	mjrRect viewport = {0, 0, 0, 0};
+
+	while ((bWaitForUserFeedback && !bOKtoComplete) || doOnce)
+	{
+		doOnce = false;
+		// Set up for rendering
+		glfwMakeContextCurrent(m_Window);
+		glfwGetFramebufferSize(m_Window, &viewport.width, &viewport.height);
+
+		mjv_updateScene(mj_Model, data, &mj_Opt, NULL, &mj_Cam, mjCAT_ALL, &mj_Scn);
+
+		for (unsigned int i = 0; i < XDD_TARGETS; i++)
+		{
+			mjtNum pos[3];
+			pos[0] = t.targ_pos[i*DOF];
+			pos[1] = t.targ_pos[i*DOF+1];
+			pos[2] = t.targ_pos[i*DOF+2];
+
+			double sphereSize = 0.01;
+			float rgba[4] = {1.0, 0.0, 0.0, 1.0};
+
+			mjtNum size[3] = {sphereSize,sphereSize,sphereSize};
+
+			mjv_initGeom(&(mj_Scn.geoms[mj_Scn.ngeom]), mjGEOM_ELLIPSOID, size, pos, NULL, rgba );
+			mj_Scn.ngeom++;
+		}
+
+		glfwGetFramebufferSize(m_Window, &viewport.width, &viewport.height);
+
+
+		mjr_render(viewport, &mj_Scn, &mj_Con);
+
+		double div = 4.0;
+		viewport.width /= div;
+		viewport.height /= 4;
+		viewport.bottom += 3*viewport.height;
+		mjr_figure(viewport, &figTorque, &mj_Con);
+
+		viewport.left = 3.0*viewport.width;
+		mjr_figure(viewport, &figXDD, &mj_Con);
+
+		// Show updated scene
+		glfwSwapBuffers(m_Window);
+		glfwPollEvents();
+
+	}
+	bOKtoComplete = false;
+
+
+	if (m_bReset)
+	{
+		m_bReset = false;
+		return true;
+	}
+
+	return false;
 }
 
 bool Visualizer::Draw(mjData* data) {

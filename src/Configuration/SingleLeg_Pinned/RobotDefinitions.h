@@ -10,6 +10,7 @@
 
 #include "Command_Structs.h"
 
+#define nQstiff 5
 #define nQ 5 //# joints
 #define nX nQ //pos=vel+1 (quaternion)
 #define nU 3 //# actuated joints
@@ -28,9 +29,17 @@ static const double m_dNominalZTarget_m = 0.95;
 #if EMBEDDED
 static const std::string xml_model_filename = "/home/robot/DRL/TestStand/src/Configuration/SingleLeg_Pinned/singleleg.xml";
 #else
-static const std::string xml_model_filename = "/home/tapgar/cuda-workspace/TestStand/src/Configuration/SingleLeg_Pinned/singleleg.xml";
+static const std::string xml_model_filename = "/home/tapgar/cuda-workspace/TestStand/src/Configuration/SingleLeg_Pinned/singleleg_stiff.xml";
 #endif
 
 
+#pragma pack(push, 1)
+typedef struct {
+	double qpos[nQ];
+	double torques[nU];
+	double accels[XDD_TARGETS*DOF];
+	double targ_pos[XDD_TARGETS*DOF];
+} telemetry_t;
+#pragma pack(pop)
 
 #endif /* ROBOTDEFINITIONS_H_ */

@@ -47,12 +47,13 @@ namespace XML_Parser {
 		double range[2];
 		double ref;
 		double damping;
+		double stiffness;
 		double armature;
 		joint() {
 			id = 0;
 			body_id = 0;
 			limited = true;
-			damping = ref = armature = range[0] = range[1] = 0.0;
+			damping = ref = stiffness = armature = range[0] = range[1] = 0.0;
 			axis[0] = axis[1] = 0.0;
 			axis[2] = 1.0;
 		}
@@ -206,6 +207,12 @@ namespace XML_Parser {
 					{
 						std::getline(iss, token, '\'');
 						new_joint.damping = std::stod(token);
+						continue;
+					}
+					if (token.find("stiffness=") != std::string::npos)
+					{
+						std::getline(iss, token, '\'');
+						new_joint.stiffness = std::stod(token);
 						continue;
 					}
 					if (token.find("armature=") != std::string::npos)

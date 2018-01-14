@@ -53,6 +53,7 @@
       <geom type='mesh' mesh='left_knee'/>
       <body name='left_shin' pos='0.06068 0.04741 0'>
         <inertial pos='0.1834 0.0012 0.0002' mass='0.577' fullinertia='0.00036 0.034132 0.034111 0.000334 0 0'/>
+        <joint name='left_knee' type='hinge' range='-20 20' stiffness='1800' damping='0.1'/>
         <geom type='mesh' mesh='left_shin'/>
         <geom type='capsule' size='0.04' fromto='0 0 0 0.43476 0.02 0' rgba='0.9 0.5 0.1 0' contype='2' conaffinity='4'/>
         <body name='left_tarsus' pos='0.43476 0.02 0' xyaxes='0.52992 0.84805 0 -0.84805 0.52992 0'>
@@ -70,6 +71,7 @@
           </body>
           <body name='left_heel_spring' pos='-0.01269 -0.03059 0.00092' xyaxes='-0.91213 0.40824 0.036944 -0.40987 -0.90954 -0.068843'>
             <inertial pos='0.081 0.0022 0' mass='0.126' fullinertia='3.02e-05 0.001049 0.001028 1.53e-05 6e-07 -1e-07'/>
+            <joint name='left_heel_spring' type='hinge' limited='false' stiffness='1800' damping='0.1'/>
             <geom type='mesh' mesh='left_heel_spring'/>
           </body>
         </body>
@@ -102,6 +104,7 @@
     <!-- User parameter is the number of absolute encoder bits -->
     <actuatorpos name='left_hip_input' actuator='left_hip' user='13'/>
     <actuatorpos name='left_knee_spring_input' actuator='left_knee_spring' user='13'/>
+    <jointpos name='left_knee_output' joint='left_knee' user='18'/>
     <jointpos name='left_ankle_output' joint='left_ankle' user='18'/>
     <actuatorpos name='left_toe_input' actuator='left_toe' user='18'/>
     <jointpos name='left_toe_output' joint='left_toe' user='13'/>

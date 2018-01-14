@@ -1,8 +1,4 @@
-QPDIR := /home/tapgar/qpOASES-3.2.1
-EIGENDIR := /home/tapgar/eigen
-RBDLDIR := /home/tapgar/rbdl
-MJDIR   := /home/tapgar/libcassie-master/mjpro150
-HEADDIR := /home/tapgar/cuda-workspace/TestStand
+include UserSettings.mk
 SRCDIR := $(HEADDIR)/src
 COMMONDIR := $(SRCDIR)/Common
 COMMDIR := $(SRCDIR)/Communication
@@ -55,7 +51,7 @@ MAININCFLAGS = -I$(QPDIR)/include -I$(RBDLDIR)/src -I$(RBDLDIR)/include -I$(RBDL
 CXX = g++
 
 # C++ Compiler options
-CXXFLAGS = -std=c++11 -O3 -pipe -DNDEBUG -Wl,-rpath,$(COMMLIBDIR) -Wparentheses -Wreturn-type -Wpointer-arith -Wwrite-strings -Wno-unknown-pragmas -Wno-long-long -fPIC -DLINUX -D__USE_LONG_INTEGERS__ -D__USE_LONG_FINTS__ -DSOLVER_NONE -D__NO_COPYRIGHT__ 
+CXXFLAGS = -std=c++11 -O3 -pipe -DNDEBUG -Wl,-rpath,$(COMMLIBDIR),-rpath,$(RBDLDIR)/build,-rpath,$(QPDIR)/bin -Wparentheses -Wreturn-type -Wpointer-arith -Wwrite-strings -Wno-unknown-pragmas -Wno-long-long -fPIC -DLINUX -D__USE_LONG_INTEGERS__ -D__USE_LONG_FINTS__ -DSOLVER_NONE -D__NO_COPYRIGHT__ 
 
 # The following is necessary under cygwin, if native compilers are used
 CYGPATH_W = echo

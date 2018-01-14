@@ -37,10 +37,10 @@ public:
 //    bool send_double(double tx);
 //    bool receive_double(double* rx);
 
-    bool receive_cassie_outputs(cassie_out_t* data);
+    bool receive_cassie_outputs(cassie_out_t* data, uint8_t* byte1, uint8_t* byte2);
     bool receive_cassie_inputs(cassie_user_in_t* data);
 
-    bool send_cassie_inputs(cassie_user_in_t data);
+    bool send_cassie_inputs(cassie_user_in_t data, uint8_t byte1, uint8_t byte2);
     bool send_cassie_outputs(cassie_out_t data);
 
 };

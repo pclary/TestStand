@@ -19,6 +19,7 @@ MODDIR := $(HEADDIR)/test/UserComputer
 #           code that you wrote in order to define the problem statement
 
 MAINOBJS = $(SRCDIR)/DynamicModel.o \
+	$(SRCDIR)/DynamicState.o \
 	$(CTRLDIR)/OSC_RBDL.o \
 	$(CTRLDIR)/QPInterface.o \
 	$(COMMDIR)/udp_comms.o

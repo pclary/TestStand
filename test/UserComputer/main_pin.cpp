@@ -94,10 +94,10 @@ int main() {
 	{
 		//uncomment the profile you want
 		//if recompiling becomes a pain in the ass then just send in a single argument for what profile you want
-		profileCircle(&cntrl, t);
+//		profileCircle(&cntrl, t);
 //		profileLineX(&cntrl, t);
 //		profileLineZ(&cntrl, t);
-//		profileSetPoint(&cntrl);
+		profileSetPoint(&cntrl);
 
 		if (!robot.Run(cntrl))
 		{

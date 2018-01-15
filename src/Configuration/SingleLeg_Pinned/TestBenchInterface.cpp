@@ -10,8 +10,9 @@
 TestBenchInterface::TestBenchInterface() {
 	// TODO Auto-generated constructor stub
 #ifdef EMBEDDED
-	comms = new udp_comms(false, 8888, "192.168.1.148");
-	comms_vis = new udp_comms(true, 8880, "192.168.1.148");
+	comms_tx = new udp_comms(false, 25001, "10.10.10.100");
+	comms_rx = new udp_comms(false, 25000, "10.10.10.100");
+	comms_vis = new udp_comms(true, 8880, "192.168.1.101");
 #else
 	comms = new udp_comms(false, 8888, "127.0.0.1");
 	comms_vis = new udp_comms(true, 8880, "127.0.0.1");
@@ -39,7 +40,12 @@ TestBenchInterface::~TestBenchInterface() {
 
 bool TestBenchInterface::Init() {
 
-	if (!comms->conn())
+	if (!comms_tx->conn())
+	{
+		printf("Failed to connect... returning\n");
+		return false;
+	}
+	if (!comms_rx->conn())
 	{
 		printf("Failed to connect... returning\n");
 		return false;
@@ -54,7 +60,7 @@ bool TestBenchInterface::Init() {
 	cassie.LoadModel(xml_model_filename);
 
 	int num_retries = 0;
-	while (!comms->receive_cassie_outputs(&sensors))
+	while (!comms_rx->receive_cassie_outputs(&sensors))
 		if (num_retries++ > 5)
 			return false;
 
@@ -70,7 +76,7 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 {
 	static int vis_tx_rate = 0;
 	int num_retries = 0;
-	while (!comms->receive_cassie_outputs(&sensors))
+	while (!comms_rx->receive_cassie_outputs(&sensors))
 		if (num_retries++ > 5)
 			return false;
 
@@ -107,11 +113,15 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 
 	TorqueToCassieInputs(u.data(), &command);
 
-	bool bTxSuccess = comms->send_cassie_inputs(command);
+	bool bTxSuccess = true;
+
+#ifndef EMBEDDED
+	bTxSuccess = comms_tx->send_cassie_inputs(command);
+#endif
 
 	if (m_bVisConn)
 	{
-		if (vis_tx_rate++ > 20)
+		if (vis_tx_rate++ > 120)
 		{
 
 			telemetry_t telem;

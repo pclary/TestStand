@@ -32,6 +32,8 @@ TestBenchInterface::TestBenchInterface() {
 		command.torque[i] = 0.0;
 
 	m_bVisConn = true;
+
+	logFile.open("ethercat_log.csv");
 }
 
 TestBenchInterface::~TestBenchInterface() {
@@ -113,11 +115,17 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 
 	TorqueToCassieInputs(u.data(), &command);
 
+	UpdateLogging(sensors);
+
 	bool bTxSuccess = true;
 
-#ifndef EMBEDDED
+//#ifndef EMBEDDED
+	if (sensors.pelvis.radio.channel[11] < 0.5)
+		for (int i = 0; i < 10; i++)
+			command.torque[i] = 0.0;
+
 	bTxSuccess = comms_tx->send_cassie_inputs(command);
-#endif
+//#endif
 
 	if (m_bVisConn)
 	{
@@ -125,6 +133,15 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 		{
 
 			telemetry_t telem;
+			telem.op_state = 0x00;
+			if (sensors.isCalibrated)
+				telem.op_state |= OpState_Calibrated;
+			else
+				telem.op_state &= ~OpState_Calibrated;
+			if (sensors.pelvis.radio.channel[11] > 0.0)
+				telem.op_state |= OpState_MotorPower;
+			else
+				telem.op_state |= ~OpState_MotorPower;
 			for (int i = 0; i < nQ; i++)
 				telem.qpos[i] = qpos[i];
 			for (int i = 0; i < nU; i++)
@@ -147,3 +164,10 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 	return bTxSuccess;
 }
 
+void TestBenchInterface::UpdateLogging(cassie_out_t sensors)
+{
+
+	for (int i = 0; i < 5; i++)
+		logFile << sensors.pelvis.targetPc.etherCatStatus[i] << ",";
+	logFile << sensors.pelvis.targetPc.etherCatStatus[5] << "\n";
+}

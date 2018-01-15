@@ -14,6 +14,8 @@
 #include "udp_comms.h"
 #include "Command_Structs.h"
 #include "CassieToRBDL.h"
+#include <iostream>
+#include <fstream>
 
 //x and z foot targets
 typedef struct {
@@ -37,6 +39,7 @@ public:
 private:
 
 	void UpdateStateEstimate();
+	void UpdateLogging(cassie_out_t sensors);
 
 	DynamicModel cassie;
 	DynamicState dyn_state;
@@ -45,6 +48,8 @@ private:
 	udp_comms* comms_tx;
 	udp_comms* comms_rx;
 	udp_comms* comms_vis;
+
+	ofstream logFile;
 
 	cassie_out_t sensors;
 	cassie_user_in_t command;

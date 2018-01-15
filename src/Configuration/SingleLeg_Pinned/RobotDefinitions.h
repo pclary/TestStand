@@ -34,6 +34,7 @@ typedef struct {
 	double torques[nU];
 	double accels[XDD_TARGETS*DOF];
 	double targ_pos[XDD_TARGETS*DOF];
+	uint8_t op_state;
 } telemetry_t;
 #pragma pack(pop)
 

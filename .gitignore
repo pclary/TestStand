@@ -3,3 +3,4 @@ models/*
 *.o
 *.csv
 Debug
+bin/*

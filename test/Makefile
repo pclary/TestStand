@@ -12,6 +12,7 @@ PHYSDIR := $(HEADDIR)/test/PhysicsSim
 VISDIR := $(HEADDIR)/test/Visualizer
 MODDIR := $(HEADDIR)/test/UserComputer
 
+OUTDIR := $(HEADDIR)/bin
 
 # CHANGEME: Here is the name of all object files corresponding to the source
 #           code that you wrote in order to define the problem statement
@@ -51,7 +52,7 @@ MAININCFLAGS = -I$(QPDIR)/include -I$(RBDLDIR)/src -I$(RBDLDIR)/include -I$(RBDL
 CXX = g++
 
 # C++ Compiler options
-CXXFLAGS = -std=c++11 -O3 -pipe -DNDEBUG -Wl,-rpath,$(COMMLIBDIR),-rpath,$(RBDLDIR)/build,-rpath,$(QPDIR)/bin -Wparentheses -Wreturn-type -Wpointer-arith -Wwrite-strings -Wno-unknown-pragmas -Wno-long-long -fPIC -DLINUX -D__USE_LONG_INTEGERS__ -D__USE_LONG_FINTS__ -DSOLVER_NONE -D__NO_COPYRIGHT__ 
+CXXFLAGS = -std=c++11 -O3 -pipe -DNDEBUG -Wl,-rpath,$(COMMLIBDIR),-rpath,$(RBDLDIR)/build,-rpath,$(QPDIR)/bin,-rpath,$(MJDIR)/bin -Wparentheses -Wreturn-type -Wpointer-arith -Wwrite-strings -Wno-unknown-pragmas -Wno-long-long -fPIC -DLINUX -D__USE_LONG_INTEGERS__ -D__USE_LONG_FINTS__ -DSOLVER_NONE -D__NO_COPYRIGHT__ 
 
 # The following is necessary under cygwin, if native compilers are used
 CYGPATH_W = echo
@@ -69,21 +70,21 @@ floating_main: $(MODFBDIR)/TestBenchInterface.o
 floating_main: $(MAINOBJS)
 	bla=;\
 	for file in $(MAINOBJS); do bla="$$bla `$(CYGPATH_W) $$file`"; done; \
-	$(CXX) $(MODDIR)/main_fb.cpp $(CXXFLAGS) $(INCL) -o main $$bla $(LIBS)
+	$(CXX) $(MODDIR)/main_fb.cpp $(CXXFLAGS) $(INCL) -o $(OUTDIR)/main $$bla $(LIBS)
 	
 floating_sim: INCL := -I$(MODFBDIR) $(PHYSINCFLAGS)
 floating_sim: LIBS := $(PHYSLIBS)
 floating_sim: $(PHYSOBJS)
 	bla=;\
 	for file in $(PHYSOBJS); do bla="$$bla `$(CYGPATH_W) $$file`"; done; \
-	$(CXX) $(CXXFLAGS) $(INCL) -o sim $$bla $(LIBS)
+	$(CXX) $(CXXFLAGS) $(INCL) -o $(OUTDIR)/sim $$bla $(LIBS)
 
 floating_vis: INCL := -I$(MODFBDIR) $(VISINCFLAGS)
 floating_vis: LIBS := $(VISLIBS)
 floating_vis: $(VISOBJS)
 	bla=;\
 	for file in $(VISOBJS); do bla="$$bla `$(CYGPATH_W) $$file`"; done; \
-	$(CXX) $(CXXFLAGS) $(INCL) -o vis $$bla $(LIBS)
+	$(CXX) $(CXXFLAGS) $(INCL) -o $(OUTDIR)/vis $$bla $(LIBS)
 	
 pinned: pinned_main pinned_sim pinned_vis
 
@@ -94,24 +95,24 @@ pinned_main: $(MODPINDIR)/TestBenchInterface.o
 pinned_main: $(MAINOBJS)
 	bla=;\
 	for file in $(MAINOBJS); do bla="$$bla `$(CYGPATH_W) $$file`"; done; \
-	$(CXX) $(MODDIR)/main_pin.cpp $(CXXFLAGS) $(INCL) -o main $$bla $(LIBS)
+	$(CXX) $(MODDIR)/main_pin.cpp $(CXXFLAGS) $(INCL) -o $(OUTDIR)/main $$bla $(LIBS)
 	
 pinned_sim: INCL := -I$(MODPINDIR) $(PHYSINCFLAGS)
 pinned_sim: LIBS := $(PHYSLIBS)
 pinned_sim: $(PHYSOBJS)
 	bla=;\
 	for file in $(PHYSOBJS); do bla="$$bla `$(CYGPATH_W) $$file`"; done; \
-	$(CXX) $(CXXFLAGS) $(INCL) -o sim $$bla $(LIBS)
+	$(CXX) $(CXXFLAGS) $(INCL) -o $(OUTDIR)/sim $$bla $(LIBS)
 
 pinned_vis: INCL := -I$(MODPINDIR) $(VISINCFLAGS)
 pinned_vis: LIBS := $(VISLIBS)
 pinned_vis: $(VISOBJS)
 	bla=;\
 	for file in $(VISOBJS); do bla="$$bla `$(CYGPATH_W) $$file`"; done; \
-	$(CXX) $(CXXFLAGS) $(INCL) -o vis $$bla $(LIBS)
+	$(CXX) $(CXXFLAGS) $(INCL) -o $(OUTDIR)/vis $$bla $(LIBS)
 
 clean:
-	rm -rf main sim vis $(OBJS) $(MODPINDIR)/TestBenchInterface.o $(MODFBDIR)/TestBenchInterface.o
+	rm -rf $(OUTDIR)/main $(OUTDIR)/sim $(OUTDIR)/vis $(OBJS) $(MODPINDIR)/TestBenchInterface.o $(MODFBDIR)/TestBenchInterface.o
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) $(INCL) -c -o $@ $<

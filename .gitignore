@@ -2,3 +2,4 @@ out
 models/*
 *.o
 *.csv
+Debug

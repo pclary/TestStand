@@ -15,6 +15,8 @@ MODFBDIR := $(CONFIGDIR)/SingleLeg_FB
 
 MODDIR := $(HEADDIR)/test/UserComputer
 
+OUTDIR := $(HEADDIR)/bin
+
 # CHANGEME: Here is the name of all object files corresponding to the source
 #           code that you wrote in order to define the problem statement
 
@@ -61,7 +63,7 @@ floating_main: $(MODFBDIR)/TestBenchInterface.o
 floating_main: $(MAINOBJS)
 	bla=;\
 	for file in $(MAINOBJS); do bla="$$bla `$(CYGPATH_W) $$file`"; done; \
-	$(CXX) $(MODDIR)/main_fb.cpp $(CXXFLAGS) $(INCL) -o main $$bla $(LIBS)
+	$(CXX) $(MODDIR)/main_fb.cpp $(CXXFLAGS) $(INCL) -o $(OUTDIR)/main $$bla $(LIBS)
 
 pinned: pinned_main
 
@@ -72,10 +74,10 @@ pinned_main: $(MODPINDIR)/TestBenchInterface.o
 pinned_main: $(MAINOBJS)
 	bla=;\
 	for file in $(MAINOBJS); do bla="$$bla `$(CYGPATH_W) $$file`"; done; \
-	$(CXX) $(MODDIR)/main_pin.cpp $(CXXFLAGS) $(INCL) -o main $$bla $(LIBS)
+	$(CXX) $(MODDIR)/main_pin.cpp $(CXXFLAGS) $(INCL) -o $(OUTDIR)/main $$bla $(LIBS)
 
 clean:
-	rm -rf main sim vis $(OBJS) $(MODPINDIR)/TestBenchInterface.o $(MODFBDIR)/TestBenchInterface.o
+	rm -rf $(OUTDIR)/main $(OBJS) $(MODPINDIR)/TestBenchInterface.o $(MODFBDIR)/TestBenchInterface.o
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) $(INCL) -c -o $@ $<

@@ -1,3 +1,6 @@
 out
 models/*
 *.o
+*.csv
+Debug
+bin/*

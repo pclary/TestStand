@@ -23,7 +23,7 @@ int main(int argc,char* argv[]) {
 		return -1;
 	}
 
-	mj_activate("/home/tapgar/.mujoco/mjkey.txt");
+	mj_activate("../../ThirdParty/mjpro150/mjkey.txt");
 	char error[1000] = "Could not load binary model";
 	mjModel* mj_Model = mj_loadXML(xml_model_filename.c_str(), 0, error, 1000);
 	if (!mj_Model) {

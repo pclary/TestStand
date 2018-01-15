@@ -27,7 +27,7 @@ int main(int argc,char* argv[]) {
 		}
 	}
 
-//	udp_comms* comms = new udp_comms(false, 8880, "192.168.1.148");
+//	udp_comms* comms = new udp_comms(false, 8880, "192.168.1.200");
 	udp_comms* comms = new udp_comms(false, 8880, "127.0.0.1");
 	if (!comms->conn())
 	{
@@ -35,7 +35,7 @@ int main(int argc,char* argv[]) {
 		return -1;
 	}
 
-	mj_activate("/home/tapgar/.mujoco/mjkey.txt");
+	mj_activate("../../ThirdParty/mjpro150/mjkey.txt");
 	char error[1000] = "Could not load binary model";
 	mjModel* mj_Model = mj_loadXML(xml_model_filename.c_str(), 0, error, 1000);
 	if (!mj_Model) {

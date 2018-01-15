@@ -1,0 +1,26 @@
+Sat Jan 13 19:57:06 2018
+ERROR: Load model error: Error: could not open STL file '/home/tapgar/cuda-workspace/TestStand/models/cassie-stl-meshes/pelvis.stl'
+Object name = pelvis, id = 0, line = 25, column = 5
+
+Sat Jan 13 19:58:38 2018
+ERROR: Load model error: Error: could not open STL file '/home/tapgar/workspace/ThirdParty/mjpro150/models/cassie-stl-meshes-lowres/pelvis.stl'
+Object name = pelvis, id = 0, line = 25, column = 5
+
+Sun Jan 14 15:46:54 2018
+ERROR: Could not open activation key file /home/drl/workspace/ThirdParty/mjpro150/mjkey.txt
+
+Sun Jan 14 15:47:30 2018
+ERROR: Load model error: XML parse error at line 0, column 0:
+Failed to open file
+
+
+Sun Jan 14 15:49:45 2018
+ERROR: Load model error: XML parse error at line 0, column 0:
+Failed to open file
+
+
+Sun Jan 14 15:52:59 2018
+ERROR: Load model error: XML parse error at line 0, column 0:
+Failed to open file
+
+

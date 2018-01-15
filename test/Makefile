@@ -1,4 +1,9 @@
-include UserSettings.mk
+WRKDIR := ${workspacePath}
+QPDIR := $(WRKDIR)/ThirdParty/qpOASES-3.2.1
+EIGENDIR := $(WRKDIR)/ThirdParty/eigen
+RBDLDIR := $(WRKDIR)/ThirdParty/rbdl
+MJDIR   := $(WRKDIR)/ThirdParty/mjpro150
+HEADDIR := $(WRKDIR)/TestStand
 SRCDIR := $(HEADDIR)/src
 COMMONDIR := $(SRCDIR)/Common
 COMMDIR := $(SRCDIR)/Communication

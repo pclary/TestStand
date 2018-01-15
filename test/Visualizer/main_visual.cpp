@@ -27,8 +27,8 @@ int main(int argc,char* argv[]) {
 		}
 	}
 
-	udp_comms* comms = new udp_comms(false, 8880, "192.168.1.200");
-//	udp_comms* comms = new udp_comms(false, 8880, "127.0.0.1");
+//	udp_comms* comms = new udp_comms(false, 8880, "192.168.1.200");
+	udp_comms* comms = new udp_comms(false, 8880, "127.0.0.1");
 	if (!comms->conn())
 	{
 		printf("Failed to connect... returning\n");

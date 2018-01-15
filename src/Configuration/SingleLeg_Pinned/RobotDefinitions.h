@@ -26,7 +26,7 @@ static const double m_dControlTime_s = 0.0005; //how often the controller runs
 
 static const double m_dNominalZTarget_m = 0.95;
 
-static const std::string xml_model_filename = "../Configuration/SingleLeg_Pinned/singleleg_stiff.xml";
+static const std::string xml_model_filename = "../../ThirdParty/mjpro150/model/singleleg_pinned_stiff.xml";
 
 #pragma pack(push, 1)
 typedef struct {

@@ -10,7 +10,7 @@
 TestBenchInterface::TestBenchInterface() {
 	// TODO Auto-generated constructor stub
 #ifdef EMBEDDED
-	comms_tx = new udp_comms(false, 25001, "10.10.10.100");
+	comms_tx = new udp_comms(true, 25000, "10.10.10.3");
 	comms_rx = new udp_comms(false, 25000, "10.10.10.100");
 	comms_vis = new udp_comms(true, 8880, "192.168.1.101");
 #else

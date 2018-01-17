@@ -10,7 +10,7 @@
 TestBenchInterface::TestBenchInterface() {
 	// TODO Auto-generated constructor stub
 #ifdef EMBEDDED
-	comms_tx = new udp_comms(false, 25001, "10.10.10.100");
+	comms_tx = new udp_comms(true, 25000, "10.10.10.3");
 	comms_rx = new udp_comms(false, 25000, "10.10.10.100");
 	comms_vis = new udp_comms(true, 8880, "192.168.1.101");
 #else
@@ -44,12 +44,12 @@ bool TestBenchInterface::Init() {
 
 	if (!comms_tx->conn())
 	{
-		printf("Failed to connect... returning\n");
+		printf("Failed to connect... rt tx... returning\n");
 		return false;
 	}
 	if (!comms_rx->conn())
 	{
-		printf("Failed to connect... returning\n");
+		printf("Failed to connect... rt rx... returning\n");
 		return false;
 	}
 
@@ -74,7 +74,7 @@ bool TestBenchInterface::Init() {
 	return true;
 }
 
-bool TestBenchInterface::Run(ControlObjective cntrl)
+bool TestBenchInterface::Run(ControlObjective cntrl, double* bRadio)
 {
 	static int vis_tx_rate = 0;
 	int num_retries = 0;
@@ -84,6 +84,9 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 
 	CassieOutputsToState(&cassie, sensors, qpos, qvel);
 	cassie.setState(qpos, qvel);
+
+	for (int i = 0; i < 16; i++)
+		bRadio[i] = sensors.pelvis.radio.channel[i];
 
 	dyn_state.UpdateDynamicState(&cassie);
 
@@ -113,6 +116,9 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 	bool bContact[] = {false, false};
 	osc->RunPTSC(&cassie, &dyn_state, xdd, bActive, bContact, &u);
 
+	for (int i = 0; i < 10; i++)
+		command.torque[i] = 0.0;
+
 	TorqueToCassieInputs(u.data(), &command);
 
 	UpdateLogging(sensors);
@@ -123,8 +129,12 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 	if (sensors.pelvis.radio.channel[11] < 0.5)
 		for (int i = 0; i < 10; i++)
 			command.torque[i] = 0.0;
+	command.torque[2] *= sensors.leftLeg.hipPitchDrive.gearRatio;
+	command.torque[3] *= sensors.leftLeg.kneeDrive.gearRatio;
+	command.torque[4] *= sensors.leftLeg.footDrive.gearRatio;
 
-	bTxSuccess = comms_tx->send_cassie_inputs(command);
+	comms_tx->send_cassie_inputs(command);
+	//printf("tx to rt\n");
 //#endif
 
 	if (m_bVisConn)
@@ -141,7 +151,7 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 			if (sensors.pelvis.radio.channel[11] > 0.0)
 				telem.op_state |= OpState_MotorPower;
 			else
-				telem.op_state |= ~OpState_MotorPower;
+				telem.op_state &= ~OpState_MotorPower;
 			for (int i = 0; i < nQ; i++)
 				telem.qpos[i] = qpos[i];
 			for (int i = 0; i < nU; i++)
@@ -152,6 +162,10 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 				telem.targ_pos[i] = x_t(i);
 //				printf("%f\t", x_t(i));
 			}
+			telem.Kp = PD_footX.Kp;
+			telem.Kd = PD_footX.Kd;
+			telem.freq = cntrl.freq;
+			telem.amp = cntrl.amp;
 //			printf("\n");
 
 			vis_tx_rate = 0;

@@ -157,7 +157,7 @@ bool udp_comms::receive_cassie_inputs(cassie_user_in_t* data)
 
 bool udp_comms::send_cassie_inputs(cassie_user_in_t data) {
 
-	unsigned int numBytes = sizeof(cassie_user_in_t) + 2;
+	unsigned int numBytes = 100;//sizeof(cassie_user_in_t) + 2;
 	unsigned char buff[numBytes];
 
 	pack_cassie_user_in_t(&data, &(buff[2]));
@@ -226,7 +226,7 @@ bool udp_comms::send(unsigned char* buff, unsigned int numBytes)
 	if (!m_bClient)
 	{
 		//Send some data
-		if( sendto(sock , buff ,numBytes , 0, (struct sockaddr *) &remaddr, sizeof(server)) < 0)
+		if( sendto(sock , buff ,numBytes , 0, (struct sockaddr *) &server, sizeof(server)) < 0)
 		{
 			printf("Send failed : %s\n", strerror(errno));
 			return false;

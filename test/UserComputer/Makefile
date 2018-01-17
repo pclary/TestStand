@@ -50,7 +50,7 @@ CXXFLAGS = -std=c++11 -O3 -pipe -DNDEBUG -Wl,-rpath,$(COMMLIBDIR),-rpath,$(RBDLD
 # The following is necessary under cygwin, if native compilers are used
 CYGPATH_W = echo
 
-all: main
+all: pinned
 
 .SUFFIXES: .cpp .c .o .obj
 

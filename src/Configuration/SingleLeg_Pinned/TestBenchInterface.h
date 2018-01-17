@@ -22,6 +22,9 @@ typedef struct {
 	double footPos[2];
 	double footVel[2];
 	double footAcc[2];
+	double amp;
+	double freq;
+	bool bSwitchModes;
 }ControlObjective;
 
 class TestBenchInterface {
@@ -31,7 +34,7 @@ public:
 
 	bool Init();
 
-	bool Run(ControlObjective cntrl);
+	bool Run(ControlObjective cntrl, double* bRadio);
 
 	void SetFootGainX(double kp, double kd) { PD_footX.Kp = kp; PD_footX.Kd = kd; }
 	void SetFootGainZ(double kp, double kd) { PD_footZ.Kp = kp; PD_footZ.Kd = kd; }
@@ -49,7 +52,7 @@ private:
 	udp_comms* comms_rx;
 	udp_comms* comms_vis;
 
-	ofstream logFile;
+	std::ofstream logFile;
 
 	cassie_out_t sensors;
 	cassie_user_in_t command;

@@ -12,6 +12,7 @@ CTRLDIR := $(SRCDIR)/Control
 CONFIGDIR := $(SRCDIR)/Configuration
 MODPINDIR := $(CONFIGDIR)/SingleLeg_Pinned
 MODFBDIR := $(CONFIGDIR)/SingleLeg_FB
+MODCASSIEDIR := $(CONFIGDIR)/Cassie_Stiff
 
 PHYSDIR := $(HEADDIR)/test/PhysicsSim
 VISDIR := $(HEADDIR)/test/Visualizer
@@ -115,9 +116,34 @@ pinned_vis: $(VISOBJS)
 	bla=;\
 	for file in $(VISOBJS); do bla="$$bla `$(CYGPATH_W) $$file`"; done; \
 	$(CXX) $(CXXFLAGS) $(INCL) -o $(OUTDIR)/vis $$bla $(LIBS)
+	
+cassie: cassie_main cassie_sim cassie_vis
+
+cassie_main: INCL := -I$(MODCASSIEDIR) $(MAININCFLAGS)
+cassie_main: LIBS := $(MAINLIBS)
+cassie_main: MAINOBJS := $(MAINOBJS) $(MODCASSIEDIR)/TestBenchInterface.o
+cassie_main: $(MODCASSIEDIR)/TestBenchInterface.o
+cassie_main: $(MAINOBJS)
+	bla=;\
+	for file in $(MAINOBJS); do bla="$$bla `$(CYGPATH_W) $$file`"; done; \
+	$(CXX) $(MODDIR)/main_cassie.cpp $(CXXFLAGS) $(INCL) -o $(OUTDIR)/main $$bla $(LIBS)
+	
+cassie_sim: INCL := -I$(MODCASSIEDIR) $(PHYSINCFLAGS)
+cassie_sim: LIBS := $(PHYSLIBS)
+cassie_sim: $(PHYSOBJS)
+	bla=;\
+	for file in $(PHYSOBJS); do bla="$$bla `$(CYGPATH_W) $$file`"; done; \
+	$(CXX) $(CXXFLAGS) $(INCL) -o $(OUTDIR)/sim $$bla $(LIBS)
+
+cassie_vis: INCL := -I$(MODCASSIEDIR) $(VISINCFLAGS)
+cassie_vis: LIBS := $(VISLIBS)
+cassie_vis: $(VISOBJS)
+	bla=;\
+	for file in $(VISOBJS); do bla="$$bla `$(CYGPATH_W) $$file`"; done; \
+	$(CXX) $(CXXFLAGS) $(INCL) -o $(OUTDIR)/vis $$bla $(LIBS)
 
 clean:
-	rm -rf $(OUTDIR)/main $(OUTDIR)/sim $(OUTDIR)/vis $(OBJS) $(MODPINDIR)/TestBenchInterface.o $(MODFBDIR)/TestBenchInterface.o
+	rm -rf $(OUTDIR)/main $(OUTDIR)/sim $(OUTDIR)/vis $(OBJS) $(MODPINDIR)/TestBenchInterface.o $(MODFBDIR)/TestBenchInterface.o $(MODCASSIEDIR)/TestBenchInterface.o
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) $(INCL) -c -o $@ $<

@@ -14,12 +14,14 @@ TestBenchInterface::TestBenchInterface() {
 	comms_rx = new udp_comms(false, 25000, "10.10.10.100");
 	comms_vis = new udp_comms(true, 8880, "192.168.1.101");
 #else
-	comms = new udp_comms(false, 8888, "127.0.0.1");
+	comms_tx = new udp_comms(false, 25001, "127.0.0.1");
+	comms_rx = new udp_comms(false, 25000, "127.0.0.1");
 	comms_vis = new udp_comms(true, 8880, "127.0.0.1");
 #endif
 
 	int contactIds[] = {0, 1};
-	int targetIds[] = {0, 1};
+	for (int i = 0; i < XDD_TARGETS; i++)
+		targetIds[i] = i;
 
 	dyn_state.Init(contactIds);
 
@@ -106,7 +108,7 @@ bool TestBenchInterface::Run(ControlObjective cntrl, double* bRadio)
 	Eigen::VectorXd x = Eigen::VectorXd::Zero(DOF*XDD_TARGETS);
 	Eigen::VectorXd xd = Eigen::VectorXd::Zero(DOF*XDD_TARGETS);
 
-	cassie.GetTargetPoints(&x, &xd);
+	cassie.GetTargetPoints(&x, &xd, targetIds);
 
 	xdd(0) = PD_footX.Kp*(x_t(0) - x(0)) + PD_footX.Kd*(xd_t(0) - xd(0)) + cntrl.footAcc[0];
 	xdd(3) = PD_footX.Kp*(x_t(3) - x(3)) + PD_footX.Kd*(xd_t(3) - xd(3)) + cntrl.footAcc[0];
@@ -121,21 +123,22 @@ bool TestBenchInterface::Run(ControlObjective cntrl, double* bRadio)
 
 	TorqueToCassieInputs(u.data(), &command);
 
-	UpdateLogging(sensors);
+
 
 	bool bTxSuccess = true;
 
-//#ifndef EMBEDDED
+#ifdef EMBEDDED
+
+	UpdateLogging(sensors);
+
 	if (sensors.pelvis.radio.channel[11] < 0.5)
 		for (int i = 0; i < 10; i++)
 			command.torque[i] = 0.0;
 	command.torque[2] *= sensors.leftLeg.hipPitchDrive.gearRatio;
 	command.torque[3] *= sensors.leftLeg.kneeDrive.gearRatio;
 	command.torque[4] *= sensors.leftLeg.footDrive.gearRatio;
-
+#endif
 	comms_tx->send_cassie_inputs(command);
-	//printf("tx to rt\n");
-//#endif
 
 	if (m_bVisConn)
 	{

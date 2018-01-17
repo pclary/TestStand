@@ -1361,7 +1361,7 @@ bool Visualizer::Draw(mjData* data) {
 	static bool bFirstTime = true;
 
     clock_gettime(CLOCK_REALTIME, &ts);
-    double freq = 1e9/double(diff(ts,tf).tv_nsec);
+    double freq = 1e9/double(diff(tf,ts).tv_nsec);
     if (freq > max_frame_rate && !bFirstTime)
     	return false;
     bFirstTime = false;

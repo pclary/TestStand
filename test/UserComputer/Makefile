@@ -12,6 +12,7 @@ CTRLDIR := $(SRCDIR)/Control
 CONFIGDIR := $(SRCDIR)/Configuration
 MODPINDIR := $(CONFIGDIR)/SingleLeg_Pinned
 MODFBDIR := $(CONFIGDIR)/SingleLeg_FB
+MODCASSIEDIR := $(CONFIGDIR)/Cassie_Stiff
 
 MODDIR := $(HEADDIR)/test/UserComputer
 
@@ -75,9 +76,20 @@ pinned_main: $(MAINOBJS)
 	bla=;\
 	for file in $(MAINOBJS); do bla="$$bla `$(CYGPATH_W) $$file`"; done; \
 	$(CXX) $(MODDIR)/main_pin.cpp $(CXXFLAGS) $(INCL) -o $(OUTDIR)/main $$bla $(LIBS)
+	
+cassie: cassie_main
+
+cassie_main: INCL := -I$(MODCASSIEDIR) $(MAININCFLAGS)
+cassie_main: LIBS := $(MAINLIBS)
+cassie_main: MAINOBJS := $(MAINOBJS) $(MODCASSIEDIR)/TestBenchInterface.o
+cassie_main: $(MODCASSIEDIR)/TestBenchInterface.o
+cassie_main: $(MAINOBJS)
+	bla=;\
+	for file in $(MAINOBJS); do bla="$$bla `$(CYGPATH_W) $$file`"; done; \
+	$(CXX) $(MODDIR)/main_cassie.cpp $(CXXFLAGS) $(INCL) -o $(OUTDIR)/main $$bla $(LIBS)
 
 clean:
-	rm -rf $(OUTDIR)/main $(OBJS) $(MODPINDIR)/TestBenchInterface.o $(MODFBDIR)/TestBenchInterface.o
+	rm -rf $(OUTDIR)/main $(OBJS) $(MODPINDIR)/TestBenchInterface.o $(MODFBDIR)/TestBenchInterface.o $(MODCASSIEDIR)/TestBenchInterface.o
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) $(INCL) -c -o $@ $<

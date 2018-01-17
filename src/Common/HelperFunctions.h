@@ -30,12 +30,12 @@ pseudoinverse(const MatT &mat, typename MatT::Scalar tolerance = typename MatT::
 
 static void eulerToQuaternion(const double euler[], double quat[])
 {
-	double cy = cos(euler[0] * 0.5);
-	double sy = sin(euler[0] * 0.5);
-	double cr = cos(euler[1] * 0.5);
-	double sr = sin(euler[1] * 0.5);
-	double cp = cos(euler[2] * 0.5);
-	double sp = sin(euler[2] * 0.5);
+	double cy = cos(euler[2] * 0.5);
+	double sy = sin(euler[2] * 0.5);
+	double cr = cos(euler[0] * 0.5);
+	double sr = sin(euler[0] * 0.5);
+	double cp = cos(euler[1] * 0.5);
+	double sp = sin(euler[1] * 0.5);
 
 	quat[0] = cy * cr * cp + sy * sr * sp;
 	quat[1] = cy * sr * cp - sy * cr * sp;
@@ -46,20 +46,20 @@ static void eulerToQuaternion(const double euler[], double quat[])
 static void quaternionToEuler(const double quat[], double euler[])
 {
 	// roll (x-axis rotation)
-	double sinr = +2.0 * (quat[0] * quat[1] + quat[1] * quat[3]);
-	double cosr = +1.0 - 2.0 * (quat[1] * quat[1] + quat[1] * quat[1]);
+	double sinr = +2.0 * (quat[0] * quat[1] + quat[2] * quat[3]);
+	double cosr = +1.0 - 2.0 * (quat[1] * quat[1] + quat[2] * quat[2]);
 	euler[0] = atan2(sinr, cosr);
 
 	// pitch (y-axis rotation)
-	double sinp = +2.0 * (quat[0] * quat[1] - quat[3] * quat[1]);
+	double sinp = +2.0 * (quat[0] * quat[2] - quat[3] * quat[1]);
 	if (fabs(sinp) >= 1)
 		euler[1] = copysign(M_PI / 2, sinp); // use 90 degrees if out of range
 	else
 		euler[1] = asin(sinp);
 
 	// yaw (z-axis rotation)
-	double siny = +2.0 * (quat[0] * quat[3] + quat[1] * quat[1]);
-	double cosy = +1.0 - 2.0 * (quat[1] * quat[1] + quat[3] * quat[3]);
+	double siny = +2.0 * (quat[0] * quat[3] + quat[1] * quat[2]);
+	double cosy = +1.0 - 2.0 * (quat[2] * quat[2] + quat[3] * quat[3]);
 	euler[2] = atan2(siny, cosy);
 }
 

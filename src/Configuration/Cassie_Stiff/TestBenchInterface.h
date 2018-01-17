@@ -20,10 +20,6 @@ typedef struct {
 	double bodyZPos;
 	double bodyZVel;
 	double bodyZAcc;
-	double footPos[2];
-	double footVel[2];
-	double footAcc[2];
-	bool bContact;
 }ControlObjective;
 
 class TestBenchInterface {
@@ -35,26 +31,29 @@ public:
 
 	bool Run(ControlObjective cntrl);
 
-	void SetFootGainX(double kp, double kd) { PD_footX.Kp = kp; PD_footX.Kd = kd; }
-	void SetFootGainZ(double kp, double kd) { PD_footZ.Kp = kp; PD_footZ.Kd = kd; }
-	void SetBodyGainZ(double kp, double kd) { PD_bodyZ.Kp = kp; PD_bodyZ.Kd = kd; }
+	void SetCOMGains(double kp, double kd) { PD_COM.Kp = kp; PD_COM.Kd = kd; }
+	void SetStanceGains(double kp, double kd) { PD_Stance.Kp = kp; PD_Stance.Kd = kd; }
+	void SetJointGains(double kp, double kd) { PD_Pitch.Kp = kp; PD_Pitch.Kd = kd; }
 
 private:
 
 	void UpdateStateEstimate();
+	void StandingController(DynamicModel* dyn, DynamicState* dyn_state, ControlObjective cntrl, Eigen::Matrix<double, nU, 1>* u, telemetry_t* telem);
 
 	DynamicModel cassie;
+	DynamicState dyn_state;
 	OSC_RBDL* osc;
 
-	udp_comms* comms;
+	udp_comms* comms_tx;
+	udp_comms* comms_rx;
 	udp_comms* comms_vis;
 
 	cassie_out_t sensors;
 	cassie_user_in_t command;
 
-	PD_CONTROLLER PD_footX;
-	PD_CONTROLLER PD_footZ;
-	PD_CONTROLLER PD_bodyZ;
+	PD_CONTROLLER PD_COM;
+	PD_CONTROLLER PD_Pitch;
+	PD_CONTROLLER PD_Stance;
 
 	Eigen::Matrix<bool, DOF*XDD_TARGETS+QDD_TARGETS, 1> bActive;
 
@@ -62,6 +61,8 @@ private:
 	double qvel[nQ];
 
 	bool m_bVisConn;
+
+	int targetIds[XDD_TARGETS];
 
 	static constexpr double cx[] = {-0.079, 0.079};
 };

@@ -219,8 +219,8 @@ void OSC_RBDL::RunPTSC(DynamicModel* dyn, DynamicState* dyn_state, Matrix<double
 	for (int i = 0; i < nU; i++)
 		(*u)(i,0) = xtemp[nQstiff+i];
 
-	if (!status)
-		printf("QP SOLVE ERROR!!!\n");
+//	if (!status)
+//		printf("QP SOLVE ERROR!!!\n");
 
 //	std::cout << "CE:" << std::endl << CE << std::endl;
 //	std::cout << "ce:" << std::endl << ce << std::endl;
@@ -256,6 +256,16 @@ bool OSC_RBDL::SolveQP(double* H_, double* g_, double* CE_, double* ce_,
 		lbA[i] = cilb_[i-nQstiff];
 		ubA[i] = ciub_[i-nQstiff];
 	}
+
+//	for (int i = 0; i < (nQstiff+nCON*4*(DOF-1)); i++)
+//	{
+//		for (int j = 0; j < (nQstiff+nU+nCON*(2*(DOF-1)+1)); j++)
+//		{
+//			printf("%f\t", CE_C[(nQstiff+nU+nCON*(2*(DOF-1)+1))*i + j]);
+//		}
+//		printf("\n");
+//	}
+
 
 	if (bFirstCall)
 		eRet = qp->init(H_, g_, CE_C, lb_, ub_, lbA, ubA, nWSR, 0);

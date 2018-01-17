@@ -10,6 +10,7 @@
 
 #include "DynamicModel.h"
 #include "RobotDefinitions.h"
+#include "HelperFunctions.h"
 #include <rbdl/rbdl.h>
 
 static void CassieOutputsToState(DynamicModel* dyn, cassie_out_t sensors, double* qpos, double* qvel)
@@ -106,22 +107,24 @@ static void CassieOutputsToState(DynamicModel* dyn, cassie_out_t sensors, double
 	qpos[2] = -(x(5)+x(8)+x(11)+x(14))/4.0;
 	qvel[2] = -(xd(5)+xd(8)+xd(11)+xd(14))/4.0;
 
+
+
 }
-
-static void StateToCassieOutputs(double* qpos, double* qvel, cassie_out_t* sensors)
-{
-	sensors->leftLeg.hipPitchDrive.position = qpos[1];
-	sensors->leftLeg.hipPitchDrive.velocity = qvel[1];
-
-	sensors->leftLeg.kneeDrive.position = qpos[2];
-	sensors->leftLeg.kneeDrive.velocity = qvel[2];
-
-	sensors->leftLeg.tarsusJoint.position = qpos[3];
-	sensors->leftLeg.tarsusJoint.velocity = qvel[3];
-
-	sensors->leftLeg.footJoint.position = qpos[4];
-	sensors->leftLeg.footJoint.velocity = qvel[4];
-}
+//
+//static void StateToCassieOutputs(double* qpos, double* qvel, cassie_out_t* sensors)
+//{
+//	sensors->leftLeg.hipPitchDrive.position = qpos[1];
+//	sensors->leftLeg.hipPitchDrive.velocity = qvel[1];
+//
+//	sensors->leftLeg.kneeDrive.position = qpos[2];
+//	sensors->leftLeg.kneeDrive.velocity = qvel[2];
+//
+//	sensors->leftLeg.tarsusJoint.position = qpos[3];
+//	sensors->leftLeg.tarsusJoint.velocity = qvel[3];
+//
+//	sensors->leftLeg.footJoint.position = qpos[4];
+//	sensors->leftLeg.footJoint.velocity = qvel[4];
+//}
 
 static void TorqueToCassieInputs(double* u, cassie_user_in_t* command)
 {

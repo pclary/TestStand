@@ -15,13 +15,19 @@ using namespace std;
 int main(int argc,char* argv[]) {
 
 //	udp_comms* comms = new udp_comms(true, 8888, "192.168.1.147");
-	udp_comms* comms = new udp_comms(true, 8888, "127.0.0.1");
+	udp_comms* comms_tx = new udp_comms(true, 25000, "127.0.0.1");
+//	udp_comms* comms_rx = new udp_comms(true, 25001, "127.0.0.1");
 
-	if (!comms->conn())
+	if (!comms_tx->conn())
 	{
 		printf("Failed to connect... returning\n");
 		return -1;
 	}
+//	if (!comms_rx->conn())
+//	{
+//		printf("Failed to connect... returning\n");
+//		return -1;
+//	}
 
 	mj_activate("../../ThirdParty/mjpro150/mjkey.txt");
 	char error[1000] = "Could not load binary model";
@@ -38,6 +44,13 @@ int main(int argc,char* argv[]) {
 		mjtNum qpos_init[] = {0.81285567,0.57385684,-1.52914241,1.75122487,-1.66851819,-0.74119364};
 		mju_copy(mj_Data->qpos, qpos_init, nQ);
 	}
+	else if (nQ == 20)
+	{
+        double qpos_init[] = {0.0, 0.0, 0.939, 1.0, 0.0, 0.0, 0.0,
+                        0.0, 0.0, 0.68111815, -1.40730357, 1.62972042, -1.77611107, -0.61968407,
+                        0.0, 0.0, 0.68111815, -1.40730353, 1.62972043, -1.77611107, -0.61968402};
+        mju_copy(mj_Data->qpos, qpos_init, nQ+1);
+	}
 
 	mj_forward(mj_Model, mj_Data);
 
@@ -47,20 +60,25 @@ int main(int argc,char* argv[]) {
 
 	//initiate comms
 	StateToCassieOutputs(mj_Data->qpos, mj_Data->qvel, &sensors);
-	comms->send_cassie_outputs(sensors);
-	comms->send_cassie_outputs(sensors);
+	comms_tx->send_cassie_outputs(sensors);
+	comms_tx->send_cassie_outputs(sensors);
 
 	timespec ts, tf;
 	while (true) {
 
 		clock_gettime(CLOCK_REALTIME, &ts);
-		comms->receive_cassie_inputs(&command);
+		comms_tx->receive_cassie_inputs(&command);
 
 		CassieInputsToTorque(command, mj_Data->ctrl);
+//		double dSumTorque = 0.0;
+//		for (int i = 0; i < nU; i++)
+//			mj_Data->ctrl[i]=0.0;
+//		printf("%f\n", dSumTorque);
 		mj_step(mj_Model, mj_Data);
+//		mj_Data->qpos[2] = 0.94;
 
 		StateToCassieOutputs(mj_Data->qpos, mj_Data->qvel, &sensors);
-		comms->send_cassie_outputs(sensors);
+		comms_tx->send_cassie_outputs(sensors);
 
 		unsigned int diff_us = 0;
 		while (diff_us < 5e2)

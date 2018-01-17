@@ -27,8 +27,8 @@ int main(int argc,char* argv[]) {
 		}
 	}
 
-	udp_comms* comms = new udp_comms(false, 8880, "192.168.1.101");
-//	udp_comms* comms = new udp_comms(false, 8880, "127.0.0.1");
+	//	udp_comms* comms = new udp_comms(false, 8880, "192.168.1.101");
+	udp_comms* comms = new udp_comms(false, 8880, "127.0.0.1");
 	if (!comms->conn())
 	{
 		printf("Failed to connect... returning\n");
@@ -51,18 +51,19 @@ int main(int argc,char* argv[]) {
 
 	while (true) {
 		comms->receive_telemetry(&telem);
-		for (int i = 0; i < nQ; i++)
+
+		for (int i = 0; i < nX; i++)
 			mj_Data->qpos[i] = telem.qpos[i];
 
 		mj_forward(mj_Model, mj_Data);
-//		for (int i = 0; i < XDD_TARGETS*DOF; i++)
-//			printf("%f\t", telem.targ_pos[i]);
-//		printf("\n");
+		//		for (int i = 0; i < XDD_TARGETS*DOF; i++)
+		//			printf("%f\t", telem.targ_pos[i]);
+		//		printf("\n");
 
-//		for (int i = 0; i < nQ; i++)
-//			printf("%f\t%f\n", mj_Data->qpos[i], mj_Data->qvel[i]);
+		//		for (int i = 0; i < nQ; i++)
+		//			printf("%f\t%f\n", mj_Data->qpos[i], mj_Data->qvel[i]);
 		vis->DrawPinned(mj_Data, telem);
-//		vis->Draw(mj_Data);
+		//		vis->Draw(mj_Data);
 	}
 
 }

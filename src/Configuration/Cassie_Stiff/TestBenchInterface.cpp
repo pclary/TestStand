@@ -10,16 +10,25 @@
 TestBenchInterface::TestBenchInterface() {
 	// TODO Auto-generated constructor stub
 #ifdef EMBEDDED
-	comms = new udp_comms(false, 8888, "192.168.1.147");
-	comms_vis = new udp_comms(true, 8880, "192.168.1.148");
+	comms_tx = new udp_comms(false, 25001, "10.10.10.100");
+	comms_rx = new udp_comms(false, 25000, "10.10.10.100");
+	comms_vis = new udp_comms(true, 8880, "192.168.1.101");
 #else
-	comms = new udp_comms(false, 8888, "127.0.0.1");
+	comms_tx = new udp_comms(false, 25001, "127.0.0.1");
+	comms_rx = new udp_comms(false, 25000, "127.0.0.1");
 	comms_vis = new udp_comms(true, 8880, "127.0.0.1");
 #endif
-	int contactIds[] = {0, 1};
-	int targetIds[] = {0, 1, 2};
 
-	osc = new OSC_RBDL(contactIds, targetIds);
+	int contactIds[] = {2, 3, 4, 5};
+	for (int i = 0; i < XDD_TARGETS; i++)
+		targetIds[i] = i+1;
+
+	dyn_state.Init(contactIds);
+
+	osc = new OSC_RBDL(targetIds);
+	osc->AddQDDIdx(3);
+	osc->AddQDDIdx(4);
+	osc->AddQDDIdx(5);
 
 	for (int i = 0; i < DOF*XDD_TARGETS; i++)
 		bActive(i,0) = true;
@@ -36,12 +45,19 @@ TestBenchInterface::~TestBenchInterface() {
 
 bool TestBenchInterface::Init() {
 
-	if (!comms->conn())
+	if (!comms_tx->conn())
 	{
 		printf("Failed to connect... returning\n");
 		return false;
 	}
-
+	if (!comms_rx->conn())
+	{
+		printf("Failed to connect... returning\n");
+		return false;
+	}
+#ifndef EMBEDDED
+	comms_tx = comms_rx;
+#endif
 	if (!comms_vis->conn())
 	{
 		printf("Failed to connect to visualizer... continuing\n");
@@ -51,7 +67,7 @@ bool TestBenchInterface::Init() {
 	cassie.LoadModel(xml_model_filename);
 
 	int num_retries = 0;
-	while (!comms->receive_cassie_outputs(&sensors))
+	while (!comms_rx->receive_cassie_outputs(&sensors))
 		if (num_retries++ > 5)
 			return false;
 
@@ -65,70 +81,142 @@ bool TestBenchInterface::Init() {
 
 bool TestBenchInterface::Run(ControlObjective cntrl)
 {
-	timespec ts, tf;
-	clock_gettime(CLOCK_REALTIME, &ts);
-
 	static int vis_tx_rate = 0;
 	int num_retries = 0;
-	while (!comms->receive_cassie_outputs(&sensors))
+	while (!comms_rx->receive_cassie_outputs(&sensors))
 		if (num_retries++ > 5)
 			return false;
-
 
 	CassieOutputsToState(&cassie, sensors, qpos, qvel);
 	cassie.setState(qpos, qvel);
 
+	dyn_state.UpdateDynamicState(&cassie);
+
 	Eigen::Matrix<double, nU, 1> u = Eigen::Matrix<double, nU, 1>::Zero();
-	Eigen::Matrix<double, DOF*XDD_TARGETS, 1> x_t = Eigen::Matrix<double, DOF*XDD_TARGETS, 1>::Zero();
-	Eigen::Matrix<double, DOF*XDD_TARGETS, 1> xd_t = Eigen::Matrix<double, DOF*XDD_TARGETS, 1>::Zero();
-	Eigen::Matrix<double, DOF*XDD_TARGETS+QDD_TARGETS, 1> xdd = Eigen::Matrix<double, DOF*XDD_TARGETS+QDD_TARGETS, 1>::Zero();
 
-	x_t(2) = cntrl.bodyZPos;
-	x_t(3) = cntrl.footPos[0] + cx[1];
-	x_t(5) = cntrl.footPos[1];
-	x_t(6) = cntrl.footPos[0] + cx[0];
-	x_t(8) = cntrl.footPos[1];
-	xd_t(2) = cntrl.bodyZVel;
-	xd_t(3) = cntrl.footVel[0];
-	xd_t(5) = cntrl.footVel[1];
-	xd_t(6) = cntrl.footVel[0];
-	xd_t(8) = cntrl.footVel[1];
+	telemetry_t telem;
 
-	Eigen::VectorXd x = Eigen::VectorXd::Zero(DOF*XDD_TARGETS);
-	Eigen::VectorXd xd = Eigen::VectorXd::Zero(DOF*XDD_TARGETS);
-
-	cassie.GetTargetPoints(&x, &xd);
-
-	xdd(2) = PD_bodyZ.Kp*(x_t(2) - x(2)) + PD_bodyZ.Kd*(xd_t(2) - xd(2)) + cntrl.bodyZAcc;
-	xdd(3) = PD_footX.Kp*(x_t(3) - x(3)) + PD_footX.Kd*(xd_t(3) - xd(3)) + cntrl.footAcc[0];
-	xdd(6) = PD_footX.Kp*(x_t(6) - x(6)) + PD_footX.Kd*(xd_t(6) - xd(6)) + cntrl.footAcc[0];
-	xdd(5) = PD_footZ.Kp*(x_t(5) - x(5)) + PD_footZ.Kd*(xd_t(5) - xd(5)) + cntrl.footAcc[1];
-	xdd(8) = PD_footZ.Kp*(x_t(8) - x(8)) + PD_footZ.Kd*(xd_t(8) - xd(8)) + cntrl.footAcc[1];
-
-//	printf("%f\t%f\t%f\t%f\t%f\t%f\n", xdd(5), xdd(8), x(5), xd(5), x(8), xd(8));
-
-	bool bContact[] = {cntrl.bContact, cntrl.bContact};
-	osc->RunPTSC(&cassie, xdd, bActive, bContact, &u);
-
-	clock_gettime(CLOCK_REALTIME, &tf);
-	unsigned int diff_us = (diff(ts,tf).tv_nsec)/1e3;
-//	printf("%u\n", diff_us);
+	StandingController(&cassie, &dyn_state, cntrl, &u, &telem);
 
 	TorqueToCassieInputs(u.data(), &command);
 
-	bool bTxSuccess = comms->send_cassie_inputs(command);
+	bool bTxSuccess = true;
+
+#ifndef EMBEDDED
+	bTxSuccess = comms_tx->send_cassie_inputs(command);
+#endif
 
 	if (m_bVisConn)
 	{
-		if (vis_tx_rate++ > 20)
-		{
+//		if (vis_tx_rate++ > 120)
+//		{
+
+			for (int i = 0; i < 3; i++)
+				telem.qpos[i] = qpos[i];
+
+			eulerToQuaternion(&(qpos[3]), &(telem.qpos[3]));
+
+			for (int i = 7; i < nX; i++)
+				telem.qpos[i] = qpos[i-1];
+
 			vis_tx_rate = 0;
-			comms_vis->send_cassie_outputs(sensors);
-		}
+			comms_vis->send_telemetry(telem);
+//		}
 	}
 
+//	usleep(1e6);
 	//add logging
 
 	return bTxSuccess;
 }
+
+void TestBenchInterface::StandingController(DynamicModel* dyn, DynamicState* dyn_state, ControlObjective cntrl, Eigen::Matrix<double, nU, 1>* u, telemetry_t* telem)
+{
+	Eigen::Matrix<bool, DOF*XDD_TARGETS+QDD_TARGETS, 1> bActive;
+	for (int i = 0; i < DOF*XDD_TARGETS+QDD_TARGETS; i++)
+		bActive(i,0) = true;
+
+	Eigen::Matrix<double, DOF*XDD_TARGETS, 1> x_t = Eigen::Matrix<double, DOF*XDD_TARGETS, 1>::Zero();
+	Eigen::Matrix<double, DOF*XDD_TARGETS, 1> xd_t = Eigen::Matrix<double, DOF*XDD_TARGETS, 1>::Zero();
+	Eigen::Matrix<double, DOF*XDD_TARGETS+QDD_TARGETS, 1> xdd = Eigen::Matrix<double, DOF*XDD_TARGETS+QDD_TARGETS, 1>::Zero();
+
+	Eigen::VectorXd x = Eigen::VectorXd::Zero(DOF*XDD_TARGETS);
+	Eigen::VectorXd xd = Eigen::VectorXd::Zero(DOF*XDD_TARGETS);
+
+	dyn->GetTargetPoints(&x, &xd, targetIds);
+
+//	for (int i = 0; i < nQ; i++)
+//		printf("%f,",qpos[i]);
+//	for (int i = 0; i < nQ; i++)
+//		printf("%f,",qvel[i]);
+//	for (int i = 0; i < DOF*XDD_TARGETS; i++)
+//		printf("%f,",x(i));
+//	for (int i = 0; i < DOF*XDD_TARGETS-1; i++)
+//		printf("%f,",xd(i));
+//	printf("%f\n",xd(DOF*XDD_TARGETS-1));
+
+	double targBy = 0.0;
+	double targBx = 0.0;
+
+	double count = 0.0;
+	for (int i = 1; i < 5; i++)
+	{
+		targBx += x(i*3);
+		targBy += x(i*3+1);
+		count += 1.0;
+	}
+	targBx /= count;
+	targBy /= count;
+
+	xdd(0,0) = PD_COM.Kp*(targBx - qpos[0]) + PD_COM.Kd*(0.0 - qvel[0]);
+	xdd(1,0) = PD_COM.Kp*(targBy - qpos[1]) + PD_COM.Kd*(0.0 - qvel[1]);
+	xdd(2,0) = PD_COM.Kp*(cntrl.bodyZPos - qpos[2]) + PD_COM.Kd*(cntrl.bodyZVel - qvel[2]) + cntrl.bodyZAcc;
+
+//	printf("COM\n");
+//	printf("x: %f\t%f\t%f\t%f\n", targBx, qpos[0], qvel[0], xdd(0,0));
+//	printf("y: %f\t%f\t%f\t%f\n", targBy, qpos[1], qvel[1], xdd(1,0));
+//	printf("z: %f\t%f\t%f\t%f\n", cntrl.bodyZPos, qpos[2], qvel[2], xdd(2,0));
+
+	for (int i = 0; i < nCON; i++)
+	{
+		xdd(3+DOF*i,0) = PD_Stance.Kd*(0.0 - xd(DOF*(i+1)));
+		xdd(4+DOF*i,0) = PD_Stance.Kd*(0.0 - xd(DOF*(i+1)+1));
+		xdd(5+DOF*i,0) = PD_Stance.Kp*(-0.005 - x(DOF*(i+1)+2)) + PD_Stance.Kd*(0.0 - xd(DOF*(i+1)+2));
+//		printf("Contact: %d\n",i);
+//		printf("x: %f\t%f\n", xd(DOF*(i+1)), xdd(3+DOF*i,0));
+//		printf("y: %f\t%f\n", xd(DOF*(i+1)+1), xdd(4+DOF*i,0));
+//		printf("z: %f\t%f\t%f\n", x(DOF*(i+1)+2), xd(DOF*(i+1)+2), xdd(5+DOF*i,0));
+	}
+
+	xdd(15,0) = PD_Pitch.Kp*(0.0 - qpos[3]) + PD_Pitch.Kd*(0.0 - qvel[3]);
+	xdd(16,0) = PD_Pitch.Kp*(0.0 - qpos[4]) + PD_Pitch.Kd*(0.0 - qvel[4]);
+	xdd(17,0) = PD_Pitch.Kp*(0.0 - qpos[5]) + PD_Pitch.Kd*(0.0 - qvel[5]);
+
+//	printf("Attitude\n");
+//	printf("roll: %f\t%f\t%f\n", qpos[3], qvel[3], xdd(15,0));
+//	printf("pitch: %f\t%f\t%f\n", qpos[4], qvel[4], xdd(16,0));
+//	printf("yaw: %f\t%f\t%f\n", qpos[5], qvel[5], xdd(17,0));
+
+	bool bInContact[] = {true, true, true, true};
+
+	osc->RunPTSC(dyn, dyn_state, xdd, bActive, bInContact, u);
+
+//	printf("Torques:\n");
+//	printf("Left:\t");
+//	for (int i = 0; i < nU/2; i++)
+//		printf("%f\t", (*u)(i,0));
+//	printf("\nRight:\t");
+//	for (int i = nU/2; i < nU; i++)
+//		printf("%f\t", (*u)(i,0));
+//	printf("\n");
+
+	for (int i = 0; i < nU; i++)
+		telem->torques[i] = (*u)(i,0);
+	for (int i = 0; i < XDD_TARGETS*DOF; i++)
+	{
+		telem->accels[i] = xdd(i);
+		telem->targ_pos[i] = x_t(i);
+	}
+}
+
 

@@ -204,10 +204,7 @@ void DynamicModel::LoadModel(std::string xml_file) {
 					motorLimits(i,0) = motors[i].range[0];
 					motorLimits(i,1) = motors[i].range[1];
 				}
-				if (bodies[j].joints[k].type.compare("free") == 0)
-					idx+=6;
-				else
-					idx++;
+				idx++;
 			}
 		}
 	}
@@ -430,9 +427,7 @@ void DynamicModel::GetConrodAngles(VectorNd* q_con)
 
 		if (rot_axis_1(0)*rot_axis_2(0) + rot_axis_1(1)*rot_axis_2(1) + rot_axis_1(2)*rot_axis_2(2) > 0.0)
 			(*q_con)(i) *= -1.0;
-//
-//		std::cout << "vecC -> vecB\n" << rot_axis_1.transpose() << std::endl;
-//		std::cout << "vecA -> vecB\n" << rot_axis_2.transpose() << std::endl;
+
 //
 //		for (int j = 0; j < 3; j++)
 //			printf("%f,",vecA(j));

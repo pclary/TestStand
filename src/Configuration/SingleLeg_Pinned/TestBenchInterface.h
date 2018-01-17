@@ -65,6 +65,8 @@ private:
 	double qpos[nQ];
 	double qvel[nQ];
 
+	int targetIds[XDD_TARGETS];
+
 	bool m_bVisConn;
 
 	static constexpr double cx[] = {-0.079, 0.079};

@@ -23,9 +23,9 @@ OUTDIR := $(HEADDIR)/bin
 # CHANGEME: Here is the name of all object files corresponding to the source
 #           code that you wrote in order to define the problem statement
 VISOBJS = $(VISDIR)/main_visual.o \
-	$(VISDIR)/Visualizer.o \
+	$(VISDIR)/CassieVis.o \
 	$(COMMDIR)/udp_comms.o
-	
+
 PHYSOBJS = $(PHYSDIR)/main_sim.o \
 	$(COMMDIR)/udp_comms.o
 	

@@ -34,8 +34,8 @@ typedef struct {
 	double targ_pos[XDD_TARGETS*DOF];
 	uint8_t op_state;
 	uint8_t select_index;
-	double Kp;
-	double Kd;
+	double Kp[6];
+	double Kd[6];
 	double freq;
 	double amp;
 } telemetry_t;

@@ -7,7 +7,7 @@
 #include <mutex>          // std::mutex
 
 #include "mujoco.h"
-#include "Visualizer.h"
+#include "CassieVis.h"
 #include "SharedRobotDefinitions.h"
 #include "CassieToMuJoCo.h"
 
@@ -45,7 +45,7 @@ int main(int argc,char* argv[]) {
 	// Initialize mjData
 	mjData* mj_Data = mj_makeData(mj_Model);
 
-	CassieVis* vis = new Visualizer(mj_Model, bSaveVid, "remote_cassie");
+	CassieVis* vis = new CassieVis(mj_Model, bSaveVid, "remote_cassie");
 
 	telemetry_t telem;
 

@@ -349,7 +349,7 @@ void CassieVis::profilerUpdateTorques(telemetry_t t)
 	{
 		for (int i = pnt - 1; i > 0; i--)
 		{
-			figTau.linedata[n][2*i+1] = figTauRight.linedata[n][2*i-1];
+			figTauRight.linedata[n][2*i+1] = figTauRight.linedata[n][2*i-1];
 			dMax = max(figTauRight.linedata[n][2*i+1], dMax);
 			dMin = min(figTauRight.linedata[n][2*i+1], dMin);
 		}

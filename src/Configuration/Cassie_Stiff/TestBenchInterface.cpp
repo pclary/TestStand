@@ -143,17 +143,17 @@ bool TestBenchInterface::Run(ControlObjective cntrl, double* bRadio)
 
 			telem.select_index = cntrl.idx;
 			telem.Kp[0] = PD_COM_X.Kp;
-			telem.Kp[0] = PD_COM_X.Kd;
+			telem.Kd[0] = PD_COM_X.Kd;
 			telem.Kp[1] = PD_COM_Y.Kp;
-			telem.Kp[1] = PD_COM_Y.Kd;
+			telem.Kd[1] = PD_COM_Y.Kd;
 			telem.Kp[2] = PD_COM_Z.Kp;
-			telem.Kp[2] = PD_COM_Z.Kd;
+			telem.Kd[2] = PD_COM_Z.Kd;
 			telem.Kp[3] = PD_StanceXY.Kp;
-			telem.Kp[3] = PD_StanceXY.Kd;
+			telem.Kd[3] = PD_StanceXY.Kd;
 			telem.Kp[4] = PD_StanceZ.Kp;
-			telem.Kp[4] = PD_StanceZ.Kd;
+			telem.Kd[4] = PD_StanceZ.Kd;
 			telem.Kp[5] = PD_Pitch.Kp;
-			telem.Kp[5] = PD_Pitch.Kd;
+			telem.Kd[5] = PD_Pitch.Kd;
 
 			vis_tx_rate = 0;
 			comms_vis->send_telemetry(telem);
@@ -203,6 +203,11 @@ void TestBenchInterface::StandingController(DynamicModel* dyn, DynamicState* dyn
 	x_t(0) = targBx;
 	x_t(1) = targBy;
 	x_t(2) = cntrl.bodyZPos;
+
+	for (int i = 3; i < XDD_TARGETS*DOF; i++)
+	{
+		x_t(i) = x(i);
+	}
 
 	xdd(0,0) = PD_COM_X.Kp*(targBx - qpos[0]) + PD_COM_X.Kd*(0.0 - qvel[0]);
 	xdd(1,0) = PD_COM_Y.Kp*(targBy - qpos[1]) + PD_COM_Y.Kd*(0.0 - qvel[1]);

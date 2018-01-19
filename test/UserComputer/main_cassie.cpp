@@ -80,55 +80,56 @@ int main() {
 		}
 		t += 0.0005;
 
-		cntrl.idx = (unsigned int)((bRadio[6] + 1.0)*3.0 - 1e-3);
+		cntrl.idx = (unsigned int)((-1.0*bRadio[6] + 1.0)*3.0 - 1e-3);
+		double sf = 1e-2;
 
 		switch (cntrl.idx)
 		{
 		case 0:
 			if (bRadio[15] > 0.0)
-				PD_COM_X.Kp += 1e-4 * bRadio[0];
+				PD_COM_X.Kp += sf * bRadio[0];
 			else
-				PD_COM_X.Kd += 1e-4 * bRadio[0];
+				PD_COM_X.Kd += sf * bRadio[0];
 			robot.SetCOMXGains(PD_COM_X.Kp, PD_COM_X.Kd);
 			break;
 
 		case 1:
 			if (bRadio[15] > 0.0)
-				PD_COM_Y.Kp += 1e-4 * bRadio[0];
+				PD_COM_Y.Kp += sf * bRadio[0];
 			else
-				PD_COM_Y.Kd += 1e-4 * bRadio[0];
+				PD_COM_Y.Kd += sf * bRadio[0];
 			robot.SetCOMYGains(PD_COM_Y.Kp, PD_COM_Y.Kd);
 			break;
 
 		case 2:
 			if (bRadio[15] > 0.0)
-				PD_COM_Z.Kp += 1e-4 * bRadio[0];
+				PD_COM_Z.Kp += sf * bRadio[0];
 			else
-				PD_COM_Z.Kd += 1e-4 * bRadio[0];
+				PD_COM_Z.Kd += sf * bRadio[0];
 			robot.SetCOMZGains(PD_COM_Z.Kp, PD_COM_Z.Kd);
 			break;
 
 		case 3:
 			if (bRadio[15] > 0.0)
-				PD_StanceXY.Kp += 1e-4 * bRadio[0];
+				PD_StanceXY.Kp += sf * bRadio[0];
 			else
-				PD_StanceXY.Kd += 1e-4 * bRadio[0];
+				PD_StanceXY.Kd += sf * bRadio[0];
 			robot.SetStanceXYGains(PD_StanceXY.Kp, PD_StanceXY.Kd);
 			break;
 
 		case 4:
 			if (bRadio[15] > 0.0)
-				PD_StanceZ.Kp += 1e-4 * bRadio[0];
+				PD_StanceZ.Kp += sf * bRadio[0];
 			else
-				PD_StanceZ.Kd += 1e-4 * bRadio[0];
+				PD_StanceZ.Kd += sf * bRadio[0];
 			robot.SetStanceZGains(PD_StanceZ.Kp, PD_StanceZ.Kd);
 			break;
 
 		case 5:
 			if (bRadio[15] > 0.0)
-				PD_Pitch.Kp += 1e-4 * bRadio[0];
+				PD_Pitch.Kp += sf * bRadio[0];
 			else
-				PD_Pitch.Kd += 1e-4 * bRadio[0];
+				PD_Pitch.Kd += sf * bRadio[0];
 			robot.SetJointGains(PD_Pitch.Kp, PD_Pitch.Kd);
 			break;
 		}

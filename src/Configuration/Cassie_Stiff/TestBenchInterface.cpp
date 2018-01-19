@@ -200,6 +200,9 @@ void TestBenchInterface::StandingController(DynamicModel* dyn, DynamicState* dyn
 	}
 	targBx /= count;
 	targBy /= count;
+	x_t(0) = targBx;
+	x_t(1) = targBy;
+	x_t(2) = cntrl.bodyZPos;
 
 	xdd(0,0) = PD_COM_X.Kp*(targBx - qpos[0]) + PD_COM_X.Kd*(0.0 - qvel[0]);
 	xdd(1,0) = PD_COM_Y.Kp*(targBy - qpos[1]) + PD_COM_Y.Kd*(0.0 - qvel[1]);

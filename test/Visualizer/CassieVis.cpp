@@ -258,7 +258,7 @@ void CassieVis::profilerInit()
 			figCOMxdd.linedata[n][2*i] = (float)-i;
 			figLeftxdd.linedata[n][2*i] = (float)-i;
 			figRightxdd.linedata[n][2*i] = (float)-i;
-			figTauRight.linedata[n][2*i] = (float)-i;
+			figTauLeft.linedata[n][2*i] = (float)-i;
 			figTauRight.linedata[n][2*i] = (float)-i;
 			figMPC.linedata[n][2*i] = (float)-i;
 		}
@@ -372,21 +372,26 @@ void CassieVis::profilerUpdateCOP(telemetry_t t)
 	int pnt = 0;
 	for (int i = 0; i < nCON; i++)
 	{
-		figCOMXY.linedata[0][pnt*2] = t.targ_pos[3 + i*3 + 0];
-		figCOMXY.linedata[0][pnt*2+1] = t.targ_pos[3 + i*3 + 1];
-		figCOMXZ.linedata[0][pnt*2] = t.targ_pos[3 + i*3 + 0];
-		figCOMXZ.linedata[0][pnt*2+1] = t.targ_pos[3 + i*3 + 2];
+		pnt = i;
+		if (pnt == 2)
+			pnt = 3;
+		else if (pnt == 3)
+			pnt = 2;
+		figCOMXY.linedata[0][i*2] = t.targ_pos[3 + pnt*3 + 0];
+		figCOMXY.linedata[0][i*2+1] = t.targ_pos[3 + pnt*3 + 1];
+		figCOMXZ.linedata[0][i*2] = t.targ_pos[3 + pnt*3 + 0];
+		figCOMXZ.linedata[0][i*2+1] = t.targ_pos[3 + pnt*3 + 2];
 
 
-		dMaxX = max(figCOMXY.linedata[0][pnt*2],dMaxX);
-		dMinX = min(figCOMXY.linedata[0][pnt*2],dMinX);
-		dMaxY = max(figCOMXY.linedata[0][pnt*2+1],dMaxY);
-		dMinY = min(figCOMXY.linedata[0][pnt*2+1],dMinY);
-		dMaxZ = max(figCOMXZ.linedata[0][pnt*2+1],dMaxZ);
-		dMinZ = min(figCOMXZ.linedata[0][pnt*2+1],dMinZ);
+		dMaxX = max(figCOMXY.linedata[0][i*2],dMaxX);
+		dMinX = min(figCOMXY.linedata[0][i*2],dMinX);
+		dMaxY = max(figCOMXY.linedata[0][i*2+1],dMaxY);
+		dMinY = min(figCOMXY.linedata[0][i*2+1],dMinY);
+		dMaxZ = max(figCOMXZ.linedata[0][i*2+1],dMaxZ);
+		dMinZ = min(figCOMXZ.linedata[0][i*2+1],dMinZ);
 
-		pnt++;
 	}
+	pnt = 4;
 	figCOMXY.linedata[0][pnt*2] = figCOMXY.linedata[0][0];
 	figCOMXY.linedata[0][pnt*2+1] = figCOMXY.linedata[0][1];
 	figCOMXZ.linedata[0][pnt*2] = figCOMXZ.linedata[0][0];
@@ -453,9 +458,9 @@ void CassieVis::profilerShow(mjrRect vp)
 	mjr_figure(small_vp, &figCOMxdd, &mj_Con);
 
 	small_vp.bottom = 3*vp.height/4;
-	small_vp.left = 1*vp.height/4;
+	small_vp.left = 1*vp.width/4;
 	mjr_figure(small_vp, &figCOMXY, &mj_Con);
-	small_vp.left = 2*vp.height/4;
+	small_vp.left = 2*vp.width/4;
 	mjr_figure(small_vp, &figCOMXZ, &mj_Con);
 
 	small_vp.left = 0;
@@ -532,17 +537,23 @@ bool CassieVis::Draw(mjData* data, telemetry_t t)
 			calib = 1;
 		if (t.op_state & OpState_MotorPower)
 			power = 1;
-		char user_info[1000] = "";
-		sprintf(user_info, "%d\n%d\n%f\t%f\n%f\t%f\n%f\t%f\n%f\t%f\n%f\t%f\n%f\t%f",
-				calib, power, t.Kp[0], t.Kd[0], t.Kp[1], t.Kd[1], t.Kp[2], t.Kd[2],
-				t.Kp[3], t.Kd[3], t.Kp[4], t.Kd[4], t.Kp[5], t.Kd[5] );
+		char user_info[5000] = "";
+		char user_info2[5000] = "";
+		sprintf(user_info, "%d\n%d\n%.2f\n%.2f\n%.2f\n%.2f\n%.2f\n%.2f",
+				calib, power, t.Kp[0], t.Kp[1], t.Kp[2],
+				t.Kp[3], t.Kp[4], t.Kp[5] );
+		sprintf(user_info2, "%.2f\n%.2f\n%.2f\n%.2f\n%.2f\n%.2f",
+				t.Kd[0], t.Kd[1], t.Kd[2], t.Kd[3], t.Kd[4], t.Kd[5] );
 		mjr_overlay(mjFONT_NORMAL, mjGRID_BOTTOMLEFT, smallrect,
 				"Calibrated:\nMotor Power:\nCOM_X PD:\nCOM_Y PD:\nCOM_Z PD:\nFoot PD:\nFoot Z:\nRot PD:", user_info, &mj_Con);
+		smallrect.left += 140;
+		mjr_overlay(mjFONT_NORMAL, mjGRID_BOTTOMLEFT, smallrect,
+				" \n \n \n \n \n", user_info2, &mj_Con);
 
 		smallrect.left = 5;
 		smallrect.height = 22;
-		smallrect.bottom = 5 + smallrect.height*t.select_index;
-		smallrect.width = 127;
+		smallrect.bottom = 5 + smallrect.height*(5 - t.select_index);
+		smallrect.width = 200;
 		mjr_rectangle(smallrect, 1.0, 0.0, 0.0, 0.1);
 
 		// Show updated scene

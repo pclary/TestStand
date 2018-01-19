@@ -21,7 +21,7 @@
 #include "HelperFunctions.h"
 
 #define PAUSE_VIS false
-#define TRACKING false
+#define TRACKING true
 
 using namespace std;
 using namespace Eigen;

@@ -1329,10 +1329,11 @@ bool Visualizer::DrawPinned(mjData* data, telemetry_t t)
 			calib = 1;
 		if (t.op_state & OpState_MotorPower)
 			power = 1;
-        	char user_info[100] = "";
-	        sprintf(user_info, "%d\n%d", calib, power);
-        	mjr_overlay(mjFONT_NORMAL, mjGRID_BOTTOMLEFT, smallrect,
-              		"Calibrated:\nMotor Power:", user_info, &mj_Con);
+
+		char user_info[100] = "";
+		sprintf(user_info, "%d\n%d", calib, power);
+		mjr_overlay(mjFONT_NORMAL, mjGRID_BOTTOMLEFT, smallrect,
+				"Calibrated:\nMotor Power:", user_info, &mj_Con);
 
 		// Show updated scene
 		glfwSwapBuffers(m_Window);
@@ -1359,13 +1360,13 @@ bool Visualizer::Draw(mjData* data) {
 	timespec ts;
 	static timespec tf;
 	static bool bFirstTime = true;
-//
-//    clock_gettime(CLOCK_REALTIME, &ts);
-//    double freq = 1e9/double(diff(tf,ts).tv_nsec);
-//    if (freq > max_frame_rate && !bFirstTime)
-//    	return false;
-//    bFirstTime = false;
-//    clock_gettime(CLOCK_REALTIME, &tf);
+
+    clock_gettime(CLOCK_REALTIME, &ts);
+    double freq = 1e9/double(diff(tf,ts).tv_nsec);
+    if (freq > max_frame_rate && !bFirstTime)
+    	return false;
+    bFirstTime = false;
+    clock_gettime(CLOCK_REALTIME, &tf);
 
 
 //	if (frame++ <= 34 && !bWaitForUserFeedback && !m_bSaveVideo)

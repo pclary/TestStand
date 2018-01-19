@@ -20,6 +20,7 @@ typedef struct {
 	double bodyZPos;
 	double bodyZVel;
 	double bodyZAcc;
+	unsigned int idx;
 }ControlObjective;
 
 class TestBenchInterface {
@@ -29,10 +30,13 @@ public:
 
 	bool Init();
 
-	bool Run(ControlObjective cntrl);
+	bool Run(ControlObjective cntrl, double* bRadio);
 
-	void SetCOMGains(double kp, double kd) { PD_COM.Kp = kp; PD_COM.Kd = kd; }
-	void SetStanceGains(double kp, double kd) { PD_Stance.Kp = kp; PD_Stance.Kd = kd; }
+	void SetCOMXGains(double kp, double kd) { PD_COM_X.Kp = kp; PD_COM_X.Kd = kd; }
+	void SetCOMYGains(double kp, double kd) { PD_COM_Y.Kp = kp; PD_COM_Y.Kd = kd; }
+	void SetCOMZGains(double kp, double kd) { PD_COM_Z.Kp = kp; PD_COM_Z.Kd = kd; }
+	void SetStanceXYGains(double kp, double kd) { PD_StanceXY.Kp = kp; PD_StanceXY.Kd = kd; }
+	void SetStanceZGains(double kp, double kd) { PD_StanceZ.Kp = kp; PD_StanceZ.Kd = kd; }
 	void SetJointGains(double kp, double kd) { PD_Pitch.Kp = kp; PD_Pitch.Kd = kd; }
 
 private:
@@ -51,9 +55,12 @@ private:
 	cassie_out_t sensors;
 	cassie_user_in_t command;
 
-	PD_CONTROLLER PD_COM;
+	PD_CONTROLLER PD_COM_X;
+	PD_CONTROLLER PD_COM_Y;
+	PD_CONTROLLER PD_COM_Z;
 	PD_CONTROLLER PD_Pitch;
-	PD_CONTROLLER PD_Stance;
+	PD_CONTROLLER PD_StanceXY;
+	PD_CONTROLLER PD_StanceZ;
 
 	Eigen::Matrix<bool, DOF*XDD_TARGETS+QDD_TARGETS, 1> bActive;
 

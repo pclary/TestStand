@@ -45,7 +45,7 @@ int main(int argc,char* argv[]) {
 	// Initialize mjData
 	mjData* mj_Data = mj_makeData(mj_Model);
 
-	Visualizer* vis = new Visualizer(mj_Model, bSaveVid, "remote_cassie");
+	CassieVis* vis = new Visualizer(mj_Model, bSaveVid, "remote_cassie");
 
 	telemetry_t telem;
 
@@ -62,7 +62,7 @@ int main(int argc,char* argv[]) {
 
 //				for (int i = 0; i < nQ; i++)
 //					printf("%f\t%f\n", mj_Data->qpos[i], mj_Data->qvel[i]);
-		vis->DrawPinned(mj_Data, telem);
+		vis->Draw(mj_Data, telem);
 		//		vis->Draw(mj_Data);
 	}
 

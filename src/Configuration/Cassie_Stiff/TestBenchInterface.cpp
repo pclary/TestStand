@@ -82,7 +82,7 @@ bool TestBenchInterface::Init() {
 	return true;
 }
 
-bool TestBenchInterface::Run(ControlObjective cntrl)
+bool TestBenchInterface::Run(ControlObjective cntrl, double* bRadio)
 {
 	static int vis_tx_rate = 0;
 	int num_retries = 0;
@@ -93,9 +93,8 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 	CassieOutputsToState(&cassie, sensors, qpos, qvel);
 	cassie.setState(qpos, qvel);
 
-//	printf("Q:\n");
-//	for (int i = 0; i < nX; i++)
-//		printf("%f\n", qpos[i]);
+	for (int i = 0; i < 16; i++)
+		bRadio[i] = sensors.pelvis.radio.channel[i];
 
 	dyn_state.UpdateDynamicState(&cassie);
 
@@ -109,6 +108,16 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 
 	bool bTxSuccess = true;
 
+#ifdef EMBEDDED
+
+	if (sensors.pelvis.radio.channel[11] < 0.5)
+		for (int i = 0; i < 10; i++)
+			command.torque[i] = 0.0;
+	command.torque[2] *= sensors.leftLeg.hipPitchDrive.gearRatio;
+	command.torque[3] *= sensors.leftLeg.kneeDrive.gearRatio;
+	command.torque[4] *= sensors.leftLeg.footDrive.gearRatio;
+#endif
+
 //#ifndef EMBEDDED
 	bTxSuccess = comms_tx->send_cassie_inputs(command);
 //#endif
@@ -117,20 +126,39 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 	{
 		if (vis_tx_rate++ > 120)
 		{
-
+			telem.op_state = 0x00;
+			if (sensors.isCalibrated)
+				telem.op_state |= OpState_Calibrated;
+			else
+				telem.op_state &= ~OpState_Calibrated;
+			if (sensors.pelvis.radio.channel[11] > 0.0)
+				telem.op_state |= OpState_MotorPower;
+			else
+				telem.op_state &= ~OpState_MotorPower;
 			for (int i = 0; i < 3; i++)
 				telem.qpos[i] = qpos[i];
 			telem.qpos[3] = qpos[nQ];
 			for (int i = 4; i < nX; i++)
 				telem.qpos[i] = qpos[i-1];
 
+			telem.select_index = cntrl.idx;
+			telem.Kp[0] = PD_COM_X.Kp;
+			telem.Kp[0] = PD_COM_X.Kd;
+			telem.Kp[1] = PD_COM_Y.Kp;
+			telem.Kp[1] = PD_COM_Y.Kd;
+			telem.Kp[2] = PD_COM_Z.Kp;
+			telem.Kp[2] = PD_COM_Z.Kd;
+			telem.Kp[3] = PD_StanceXY.Kp;
+			telem.Kp[3] = PD_StanceXY.Kd;
+			telem.Kp[4] = PD_StanceZ.Kp;
+			telem.Kp[4] = PD_StanceZ.Kd;
+			telem.Kp[5] = PD_Pitch.Kp;
+			telem.Kp[5] = PD_Pitch.Kd;
+
 			vis_tx_rate = 0;
 			comms_vis->send_telemetry(telem);
 		}
 	}
-
-//	usleep(1e6);
-	//add logging
 
 	return bTxSuccess;
 }
@@ -173,9 +201,9 @@ void TestBenchInterface::StandingController(DynamicModel* dyn, DynamicState* dyn
 	targBx /= count;
 	targBy /= count;
 
-	xdd(0,0) = PD_COM.Kp*(targBx - qpos[0]) + PD_COM.Kd*(0.0 - qvel[0]);
-	xdd(1,0) = PD_COM.Kp*(targBy - qpos[1]) + PD_COM.Kd*(0.0 - qvel[1]);
-	xdd(2,0) = PD_COM.Kp*(cntrl.bodyZPos - qpos[2]) + PD_COM.Kd*(cntrl.bodyZVel - qvel[2]) + cntrl.bodyZAcc;
+	xdd(0,0) = PD_COM_X.Kp*(targBx - qpos[0]) + PD_COM_X.Kd*(0.0 - qvel[0]);
+	xdd(1,0) = PD_COM_Y.Kp*(targBy - qpos[1]) + PD_COM_Y.Kd*(0.0 - qvel[1]);
+	xdd(2,0) = PD_COM_Z.Kp*(cntrl.bodyZPos - qpos[2]) + PD_COM_Z.Kd*(cntrl.bodyZVel - qvel[2]) + cntrl.bodyZAcc;
 
 //	printf("COM\n");
 //	printf("x: %f\t%f\t%f\t%f\n", targBx, qpos[0], qvel[0], xdd(0,0));
@@ -184,9 +212,9 @@ void TestBenchInterface::StandingController(DynamicModel* dyn, DynamicState* dyn
 
 	for (int i = 0; i < nCON; i++)
 	{
-		xdd(3+DOF*i,0) = PD_Stance.Kd*(0.0 - xd(DOF*(i+1)));
-		xdd(4+DOF*i,0) = PD_Stance.Kd*(0.0 - xd(DOF*(i+1)+1));
-		xdd(5+DOF*i,0) = PD_Stance.Kp*(-0.005 - x(DOF*(i+1)+2)) + PD_Stance.Kd*(0.0 - xd(DOF*(i+1)+2));
+		xdd(3+DOF*i,0) = PD_StanceXY.Kd*(0.0 - xd(DOF*(i+1)));
+		xdd(4+DOF*i,0) = PD_StanceXY.Kd*(0.0 - xd(DOF*(i+1)+1));
+		xdd(5+DOF*i,0) = PD_StanceZ.Kp*(-0.005 - x(DOF*(i+1)+2)) + PD_StanceZ.Kd*(0.0 - xd(DOF*(i+1)+2));
 //		printf("Contact: %d\n",i);
 //		printf("x: %f\t%f\n", xd(DOF*(i+1)), xdd(3+DOF*i,0));
 //		printf("y: %f\t%f\n", xd(DOF*(i+1)+1), xdd(4+DOF*i,0));

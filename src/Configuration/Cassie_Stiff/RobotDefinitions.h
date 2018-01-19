@@ -33,10 +33,11 @@ typedef struct {
 	double accels[XDD_TARGETS*DOF];
 	double targ_pos[XDD_TARGETS*DOF];
 	uint8_t op_state;
-        double Kp;
-        double Kd;
-        double freq;
-        double amp;
+	uint8_t select_index;
+	double Kp;
+	double Kd;
+	double freq;
+	double amp;
 } telemetry_t;
 #pragma pack(pop)
 

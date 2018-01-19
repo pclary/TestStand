@@ -14,10 +14,20 @@
 
 static void CassieOutputsToState(DynamicModel* dyn, cassie_out_t sensors, double* qpos, double* qvel)
 {
+	double prev_base_pos[3];
+	double prev_base_vel[3];
+	for (int i = 0; i < 3; i++)
+	{
+		prev_base_pos[i] = qpos[i];
+		prev_base_vel[i] = qvel[i];
+	}
 	qpos[0] = qpos[1] = qpos[2] = 0.0;
 	qvel[0] = qvel[1] = qvel[2] = 0.0;
+	RigidBodyDynamics::Math::Quaternion temp_quat;
+	temp_quat(0) = temp_quat(1) = temp_quat(2) = 0.0;
+	temp_quat(3) = 1.0;
 
-	quaternionToEuler(sensors.pelvis.vectorNav.orientation, &(qpos[3]));
+	dyn->SetQuaternion(temp_quat, qpos);
 
 	for (int i = 0; i < 3; i++)
 		qvel[i+3] = sensors.pelvis.vectorNav.angularVelocity[i];
@@ -58,6 +68,14 @@ static void CassieOutputsToState(DynamicModel* dyn, cassie_out_t sensors, double
 	qpos[12] = conrod_angles(0);
 	qpos[19] = conrod_angles(1);
 
+	RigidBodyDynamics::Math::Quaternion quat = RigidBodyDynamics::Math::Quaternion(
+			sensors.pelvis.vectorNav.orientation[1],
+			sensors.pelvis.vectorNav.orientation[2],
+			sensors.pelvis.vectorNav.orientation[3],
+			sensors.pelvis.vectorNav.orientation[0]);
+
+	dyn->SetQuaternion(quat, qpos);
+
 	dyn->setPos(qpos);
 
 	RigidBodyDynamics::Math::MatrixNd Jeq = RigidBodyDynamics::Math::MatrixNd::Zero(nEQ, nQ); //constraint jacobian
@@ -90,8 +108,18 @@ static void CassieOutputsToState(DynamicModel* dyn, cassie_out_t sensors, double
 	for (int i = 0; i < nQ; i++)
 		qvel[i] = qdot(i);
 
+	for (int i = 0; i < 3; i++)
+	{
+		qpos[i] = prev_base_pos[i];
+		qvel[i] = prev_base_vel[i];
+	}
 
 	dyn->setState(qpos, qvel);
+
+	static int foot_con_idx = -1;
+	static Eigen::Vector3d world_point_pos;
+	static Eigen::Vector3d world_point_vel;
+	static bool bFirst = true;
 
 	RigidBodyDynamics::Math::VectorNd x = RigidBodyDynamics::Math::VectorNd::Zero(DOF*XDD_TARGETS);
 	RigidBodyDynamics::Math::VectorNd xd = RigidBodyDynamics::Math::VectorNd::Zero(DOF*XDD_TARGETS);
@@ -99,12 +127,58 @@ static void CassieOutputsToState(DynamicModel* dyn, cassie_out_t sensors, double
 	int targids[] = {1,2,3,4,5};
 	dyn->GetTargetPoints(&x, &xd, targids);
 
-	qpos[0] = -(x(3)+x(6)+x(9)+x(12))/4.0;
-	qvel[0] = -(xd(3)+xd(6)+xd(9)+xd(12))/4.0;
-	qpos[1] = -(x(4)+x(7)+x(10)+x(13))/4.0;
-	qvel[1] = -(xd(4)+xd(7)+xd(10)+xd(13))/4.0;
-	qpos[2] = -(x(5)+x(8)+x(11)+x(14))/4.0;
-	qvel[2] = -(xd(5)+xd(8)+xd(11)+xd(14))/4.0;
+	Eigen::Vector3d point_pos, point_vel;
+	int min_foot_idx = -1;
+	if (x(5) < x(8) && x(5) < x(11) && x(5) < x(14))
+	{
+		min_foot_idx = 0;
+		point_pos = x.block<3,1>(3,0);
+		point_vel = xd.block<3,1>(3,0);
+	}
+	else if (x(8) < x(5) && x(8) < x(11) && x(8) < x(14))
+	{
+		min_foot_idx = 1;
+		point_pos = x.block<3,1>(6,0);
+		point_vel = xd.block<3,1>(6,0);
+	}
+	else if (x(11) < x(8) && x(11) < x(5) && x(11) < x(14))
+	{
+		min_foot_idx = 2;
+		point_pos = x.block<3,1>(9,0);
+		point_vel = xd.block<3,1>(9,0);
+	}
+	else
+	{
+		min_foot_idx = 3;
+		point_pos = x.block<3,1>(12,0);
+		point_vel = xd.block<3,1>(12,0);
+	}
+
+	if (min_foot_idx != foot_con_idx)
+	{
+		world_point_pos = point_pos;
+		world_point_pos(2) = 0.0;
+		world_point_vel = point_vel;
+	}
+
+	qpos[0] += world_point_pos(0) - point_pos(0);
+	qvel[0] += world_point_vel(0) - point_vel(0);
+	qpos[1] += world_point_pos(1) - point_pos(1);
+	qvel[1] += world_point_vel(1) - point_vel(1);
+	qpos[2] += world_point_pos(2) - point_pos(2);
+	qvel[2] += world_point_vel(2) - point_vel(2);
+
+
+	foot_con_idx = min_foot_idx;
+
+//	qpos[0] = -(x(3)+x(6)+x(9)+x(12))/4.0;
+//	qvel[0] = -(xd(3)+xd(6)+xd(9)+xd(12))/4.0;
+//	qpos[1] = -(x(4)+x(7)+x(10)+x(13))/4.0;
+//	qvel[1] = -(xd(4)+xd(7)+xd(10)+xd(13))/4.0;
+//	qpos[2] = -(x(5)+x(8)+x(11)+x(14))/4.0;
+//	qvel[2] = -(xd(5)+xd(8)+xd(11)+xd(14))/4.0;
+//
+//	bFirst = false;
 
 }
 

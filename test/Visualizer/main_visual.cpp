@@ -60,8 +60,8 @@ int main(int argc,char* argv[]) {
 		//			printf("%f\t", telem.targ_pos[i]);
 		//		printf("\n");
 
-		//		for (int i = 0; i < nQ; i++)
-		//			printf("%f\t%f\n", mj_Data->qpos[i], mj_Data->qvel[i]);
+//				for (int i = 0; i < nQ; i++)
+//					printf("%f\t%f\n", mj_Data->qpos[i], mj_Data->qvel[i]);
 		vis->DrawPinned(mj_Data, telem);
 		//		vis->Draw(mj_Data);
 	}

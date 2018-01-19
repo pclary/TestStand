@@ -51,6 +51,8 @@ public:
 			qpos[i] = m_State.qpos(i);
 	}
 
+	void SetQuaternion(RigidBodyDynamics::Math::Quaternion quat, double* qpos);
+
 	void GetMainBodyQuaternion(double* quat);
 
 	void GetMassMatrix(RigidBodyDynamics::Math::MatrixNd* mat);

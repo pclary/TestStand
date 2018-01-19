@@ -69,6 +69,10 @@ int main(int argc,char* argv[]) {
 		clock_gettime(CLOCK_REALTIME, &ts);
 		comms_tx->receive_cassie_inputs(&command);
 
+//		printf("Q:\n");
+//		for (int i = 0; i < nX; i++)
+//			printf("%f\n", mj_Data->qpos[i]);
+
 		CassieInputsToTorque(command, mj_Data->ctrl);
 //		double dSumTorque = 0.0;
 //		for (int i = 0; i < nU; i++)

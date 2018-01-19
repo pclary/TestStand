@@ -52,8 +52,8 @@ int main() {
 	{
 		//uncomment the profile you want
 		//if recompiling becomes a pain in the ass then just send in a single argument for what profile you want
-//		profileLineZ(&cntrl, t);
-		profileSetPoint(&cntrl);
+		profileLineZ(&cntrl, t);
+//		profileSetPoint(&cntrl);
 
 		if (!robot.Run(cntrl))
 		{

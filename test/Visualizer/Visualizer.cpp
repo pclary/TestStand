@@ -1268,7 +1268,7 @@ bool Visualizer::DrawPinned(mjData* data, telemetry_t t)
 	static bool bFirstTime = true;
 
     clock_gettime(CLOCK_REALTIME, &ts);
-    double freq = 1e9/double(diff(ts,tf).tv_nsec);
+    double freq = 1e9/double(diff(tf,ts).tv_nsec);
     if (freq > max_frame_rate && !bFirstTime)
     	return false;
     bFirstTime = false;
@@ -1359,13 +1359,13 @@ bool Visualizer::Draw(mjData* data) {
 	timespec ts;
 	static timespec tf;
 	static bool bFirstTime = true;
-
-    clock_gettime(CLOCK_REALTIME, &ts);
-    double freq = 1e9/double(diff(tf,ts).tv_nsec);
-    if (freq > max_frame_rate && !bFirstTime)
-    	return false;
-    bFirstTime = false;
-    clock_gettime(CLOCK_REALTIME, &tf);
+//
+//    clock_gettime(CLOCK_REALTIME, &ts);
+//    double freq = 1e9/double(diff(tf,ts).tv_nsec);
+//    if (freq > max_frame_rate && !bFirstTime)
+//    	return false;
+//    bFirstTime = false;
+//    clock_gettime(CLOCK_REALTIME, &tf);
 
 
 //	if (frame++ <= 34 && !bWaitForUserFeedback && !m_bSaveVideo)

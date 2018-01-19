@@ -78,23 +78,35 @@ static void StateToCassieOutputs(double* qpos, double* qvel, cassie_out_t* senso
 	sensors->rightLeg.footJoint.position = qpos[19];
 	sensors->rightLeg.footJoint.velocity = qvel[18];
 
-}
+//	printf("%f,%f\n", qpos[13], qpos[20]);
 //
+//	for (int i = 0; i < 3; i++)
+//		printf("%f,",qpos[i]);
+//	for (int i = 0; i < 3; i++)
+//		printf("%f,",euler[i]);
+//	for (int i = 0; i < nQ+1; i++)
+//		printf("%f,",qpos[i]);
+//	for (int i = 0; i < nQ-1; i++)
+//		printf("%f,",qvel[i]);
+//	printf("%f\n", qvel[nQ-1]);
+
+}
+
 //static void TorqueToCassieInputs(double* u, cassie_user_in_t* command)
 //{
 //	for (int i = 0; i < nU; i++)
 //		command->torque[i] = u[i];
 //}
-//
-//static void CassieInputsToTorque(cassie_user_in_t command, double* u)
-//{
-//	for (int i = 0; i < nU; i++)
-//	{
-//		u[i] = command.torque[i];
-////		printf("%f\t",u[i]);
-//	}
-////	printf("\n");
-//}
+
+static void CassieInputsToTorque(cassie_user_in_t command, double* u)
+{
+	for (int i = 0; i < nU; i++)
+	{
+		u[i] = command.torque[i];
+//		printf("%f\t",u[i]);
+	}
+//	printf("\n");
+}
 
 
 #endif /* CASSIETOMUJOCO_H_ */

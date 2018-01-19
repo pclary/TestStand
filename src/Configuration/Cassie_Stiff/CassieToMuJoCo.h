@@ -84,11 +84,11 @@ static void StateToCassieOutputs(double* qpos, double* qvel, cassie_out_t* senso
 //		printf("%f,",qpos[i]);
 //	for (int i = 0; i < 3; i++)
 //		printf("%f,",euler[i]);
-	for (int i = 0; i < nQ+1; i++)
-		printf("%f,",qpos[i]);
-	for (int i = 0; i < nQ-1; i++)
-		printf("%f,",qvel[i]);
-	printf("%f\n", qvel[nQ-1]);
+//	for (int i = 0; i < nQ+1; i++)
+//		printf("%f,",qpos[i]);
+//	for (int i = 0; i < nQ-1; i++)
+//		printf("%f,",qvel[i]);
+//	printf("%f\n", qvel[nQ-1]);
 
 }
 

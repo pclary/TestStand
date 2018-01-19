@@ -131,10 +131,10 @@ bool udp_comms::receive_cassie_outputs(cassie_out_t* data)
 
 bool udp_comms::send_cassie_outputs(cassie_out_t data) {
 
-	unsigned int numBytes = sizeof(cassie_out_t);
+	unsigned int numBytes = sizeof(cassie_out_t) + 2;
 	unsigned char buff[numBytes];
 
-	pack_cassie_out_t(&data, buff);
+	pack_cassie_out_t(&data, &(buff[2]));
 
 	if (!send(buff, numBytes))
 		return false;
@@ -144,13 +144,13 @@ bool udp_comms::send_cassie_outputs(cassie_out_t data) {
 
 bool udp_comms::receive_cassie_inputs(cassie_user_in_t* data)
 {
-	unsigned int numBytes = sizeof(cassie_user_in_t);
+	unsigned int numBytes = 100;//sizeof(cassie_user_in_t);
 	unsigned char buff[numBytes];
 
 	if (!receive(buff, numBytes))
 		return false;
 
-	unpack_cassie_user_in_t(buff, data);
+	unpack_cassie_user_in_t(&(buff[2]), data);
 
 	return true;
 }

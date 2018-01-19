@@ -57,7 +57,7 @@ private:
 
 	Eigen::Matrix<bool, DOF*XDD_TARGETS+QDD_TARGETS, 1> bActive;
 
-	double qpos[nQ];
+	double qpos[nX];
 	double qvel[nQ];
 
 	bool m_bVisConn;

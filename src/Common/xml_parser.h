@@ -320,18 +320,19 @@ namespace XML_Parser {
 			}
 			else if (joints[i].type.compare("free") == 0)
 			{
-				for (int j = 3; j < 6; j++)
-				{
-					sa = RigidBodyDynamics::Math::SpatialVector::Zero();
-					sa(j) = 1.0;
-					axes.push_back(sa);
-				}
-				for (int j = 0; j < 3; j++)
-				{
-					sa = RigidBodyDynamics::Math::SpatialVector::Zero();
-					sa(j) = 1.0;
-					axes.push_back(sa);
-				}
+				return RigidBodyDynamics::Joint(RigidBodyDynamics::JointTypeFloatingBase);
+//				for (int j = 3; j < 6; j++)
+//				{
+//					sa = RigidBodyDynamics::Math::SpatialVector::Zero();
+//					sa(j) = 1.0;
+//					axes.push_back(sa);
+//				}
+//				for (int j = 0; j < 3; j++)
+//				{
+//					sa = RigidBodyDynamics::Math::SpatialVector::Zero();
+//					sa(j) = 1.0;
+//					axes.push_back(sa);
+//				}
 			}
 			else
 			{

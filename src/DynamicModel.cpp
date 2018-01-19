@@ -34,11 +34,11 @@ void DynamicModel::LoadModel(std::string xml_file) {
 	Vector3d pos;
 	Matrix3d rot;
 
-	jointDamping = VectorNd::Zero(nQ);
-	jointStiffness = VectorNd::Zero(nQ);
+	jointDamping = VectorNd::Zero(nX);
+	jointStiffness = VectorNd::Zero(nX);
 	selectorMatrix = MatrixNd::Zero(nQ, nU);
 	motorLimits = MatrixNd::Zero(nU,2);
-	jointReference = VectorNd::Zero(nQ);
+	jointReference = VectorNd::Zero(nX);
 
 //	printf("parsing %s\n", xml_file.c_str());
 	unsigned int parent_id = 0;
@@ -54,7 +54,7 @@ void DynamicModel::LoadModel(std::string xml_file) {
 
 //		printf("%d\t%d\n", i, joint.mJointType);
 
-		if (joint.mJointType == RigidBodyDynamics::JointType6DoF)
+		if (joint.mJointType == RigidBodyDynamics::JointTypeFloatingBase)
 		{
 			for (unsigned int j = 0; j < 6; j++)
 			{
@@ -124,6 +124,7 @@ void DynamicModel::LoadModel(std::string xml_file) {
 		SpatialTransform tf(rot.transpose(), pos);
 
 		unsigned int body_id = m.AddBody(parent_id, tf, joint, body);
+
 		if (parent_id == 0)
 			m_nMainBody = body_id;
 //		printf("Added %u to %u\n", body_id, parent_id);
@@ -139,12 +140,13 @@ void DynamicModel::LoadModel(std::string xml_file) {
 		id_lookup.push_back(id_pair);
 	}
 
-	double qpos_init[nQ];
+	double qpos_init[nX];
 	for (int i = 0; i < nQ; i++)
 	{
 		qpos_init[i] = ref[i]*M_PI/180.0;
 //		printf("%f\n",ref[i]);
 	}
+	qpos_init[nQ] = 1.0; //quaternion... cause they are assholes
 
 	for (unsigned int i = 0; i < constraints.size(); i++)
 	{
@@ -158,8 +160,8 @@ void DynamicModel::LoadModel(std::string xml_file) {
 		}
 		Vector3d posALocal = Eigen::Map<Eigen::Vector3d>(constraints[i].posA);
 		new_constraint.posA = posALocal;
-		Vector3d baseCoord = CalcBodyToBaseCoordinates(m, Eigen::Map<VectorNd>(qpos_init, nQ), new_constraint.bodyA_id, posALocal, true);
-		new_constraint.posB = CalcBaseToBodyCoordinates(m, Eigen::Map<VectorNd>(qpos_init, nQ), new_constraint.bodyB_id, baseCoord, true);
+		Vector3d baseCoord = CalcBodyToBaseCoordinates(m, Eigen::Map<VectorNd>(qpos_init, nX), new_constraint.bodyA_id, posALocal, true);
+		new_constraint.posB = CalcBaseToBodyCoordinates(m, Eigen::Map<VectorNd>(qpos_init, nX), new_constraint.bodyB_id, baseCoord, true);
 //		std::cout << "Constraint: " << i << std::endl << "posA: " << new_constraint.posA << std::endl << "posB: " << new_constraint.posB << std::endl;
 		m_Constraints.push_back(new_constraint);
 	}
@@ -174,7 +176,7 @@ void DynamicModel::LoadModel(std::string xml_file) {
 		for (unsigned int j = 0 ; j < id_lookup.size(); j++)
 			if (id_lookup[j][0] == bodies[i].id)
 				body_id = id_lookup[j][1];
-		Vector3d baseCoord = CalcBodyToBaseCoordinates(m, Eigen::Map<VectorNd>(qpos_init, nQ), body_id, VectorNd::Zero(3), true);
+		Vector3d baseCoord = CalcBodyToBaseCoordinates(m, Eigen::Map<VectorNd>(qpos_init, nX), body_id, VectorNd::Zero(3), true);
 //		printf("%u\t\t%f,%f,%f\n", body_id, baseCoord(0),baseCoord(1),baseCoord(2));
 	}
 
@@ -184,7 +186,7 @@ void DynamicModel::LoadModel(std::string xml_file) {
 		for (unsigned int j = 0 ; j < id_lookup.size(); j++)
 			if (id_lookup[j][0] == bodies[i].id)
 				body_id = id_lookup[j][1];
-		Matrix3d rot_mat = CalcBodyWorldOrientation(m, Eigen::Map<VectorNd>(qpos_init, nQ), body_id, false);
+		Matrix3d rot_mat = CalcBodyWorldOrientation(m, Eigen::Map<VectorNd>(qpos_init, nX), body_id, false);
 //		std::cout << "body rot mat\n" << rot_mat << std::endl;
 	}
 //	for (unsigned int i = 0; i < id_lookup.size(); i++)
@@ -227,20 +229,39 @@ void DynamicModel::LoadModel(std::string xml_file) {
 	m.gravity(1) = 0.0;
 	m.gravity(2) = -9.806;
 
+//	printf("%d\t%d\n", m.)
+
 }
 
 void DynamicModel::setState(double* qpos, double* qvel)
 {
-	m_State.qpos = Eigen::Map<VectorNd>(qpos, nQ);
+	m_State.qpos = Eigen::Map<VectorNd>(qpos, nX);
 	m_State.qvel = Eigen::Map<VectorNd>(qvel, nQ);
 	UpdateKinematics(m, m_State.qpos, m_State.qvel, VectorNd::Zero(nQ));
 }
 
 void DynamicModel::setPos(double* qpos)
 {
-	m_State.qpos = Eigen::Map<VectorNd>(qpos, nQ);
+	m_State.qpos = Eigen::Map<VectorNd>(qpos, nX);
 	UpdateKinematicsCustom(m, &m_State.qpos, NULL, NULL);
 }
+
+void DynamicModel::SetQuaternion(RigidBodyDynamics::Math::Quaternion quat, double* qpos)
+{
+	m_State.qpos = Eigen::Map<VectorNd>(qpos, nX);
+	m.SetQuaternion(m_nMainBody, quat, m_State.qpos);
+	for (int i = 0; i < nX; i++)
+		qpos[i] = m_State.qpos(i);
+}
+
+//void DynamicModel::SetQuaternion(RigidBodyDynamics::Math::Quaternion quat, double* qpos)
+//{
+//	m_State.qpos = Eigen::Map<VectorNd>(qpos, nX);
+//	m.SetQuaternion(m_nMainBody, quat, m_State.qpos);
+//	for (int i = 0; i < nX; i++)
+//		qpos[i] = m_State.qpos(i);
+//}
+
 //
 //void DynamicModel::setStateQuat(double* qpos, double* qvel)
 //{
@@ -274,14 +295,14 @@ void DynamicModel::setPos(double* qpos)
 //	UpdateKinematicsCustom(m, &m_State.qpos, NULL, NULL);
 //}
 //
-//void DynamicModel::GetMainBodyQuaternion(double* quat)
-//{
-//	RigidBodyDynamics::Math::Quaternion vQuat = m.GetQuaternion(m_nMainBody, m_State.qpos);
-//	quat[0] = vQuat(3);
-//	quat[1] = vQuat(0);
-//	quat[2] = vQuat(1);
-//	quat[3] = vQuat(2);
-//}
+void DynamicModel::GetMainBodyQuaternion(double* quat)
+{
+	RigidBodyDynamics::Math::Quaternion vQuat = m.GetQuaternion(m_nMainBody, m_State.qpos);
+	quat[0] = vQuat(3);
+	quat[1] = vQuat(0);
+	quat[2] = vQuat(1);
+	quat[3] = vQuat(2);
+}
 
 void DynamicModel::GetMassMatrix(MatrixNd* mat)
 {

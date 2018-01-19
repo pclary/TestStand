@@ -36,6 +36,9 @@ TestBenchInterface::TestBenchInterface() {
 	for (int i = 0; i < 10; i++)
 		command.torque[i] = 0.0;
 
+	for (int i = 0; i < nQ; i++)
+		qpos[i] = qvel[i] = 0.0;
+
 	m_bVisConn = true;
 }
 
@@ -90,6 +93,10 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 	CassieOutputsToState(&cassie, sensors, qpos, qvel);
 	cassie.setState(qpos, qvel);
 
+//	printf("Q:\n");
+//	for (int i = 0; i < nX; i++)
+//		printf("%f\n", qpos[i]);
+
 	dyn_state.UpdateDynamicState(&cassie);
 
 	Eigen::Matrix<double, nU, 1> u = Eigen::Matrix<double, nU, 1>::Zero();
@@ -102,26 +109,24 @@ bool TestBenchInterface::Run(ControlObjective cntrl)
 
 	bool bTxSuccess = true;
 
-#ifndef EMBEDDED
+//#ifndef EMBEDDED
 	bTxSuccess = comms_tx->send_cassie_inputs(command);
-#endif
+//#endif
 
 	if (m_bVisConn)
 	{
-//		if (vis_tx_rate++ > 120)
-//		{
+		if (vis_tx_rate++ > 120)
+		{
 
 			for (int i = 0; i < 3; i++)
 				telem.qpos[i] = qpos[i];
-
-			eulerToQuaternion(&(qpos[3]), &(telem.qpos[3]));
-
-			for (int i = 7; i < nX; i++)
+			telem.qpos[3] = qpos[nQ];
+			for (int i = 4; i < nX; i++)
 				telem.qpos[i] = qpos[i-1];
 
 			vis_tx_rate = 0;
 			comms_vis->send_telemetry(telem);
-//		}
+		}
 	}
 
 //	usleep(1e6);
@@ -188,9 +193,14 @@ void TestBenchInterface::StandingController(DynamicModel* dyn, DynamicState* dyn
 //		printf("z: %f\t%f\t%f\n", x(DOF*(i+1)+2), xd(DOF*(i+1)+2), xdd(5+DOF*i,0));
 	}
 
-	xdd(15,0) = PD_Pitch.Kp*(0.0 - qpos[3]) + PD_Pitch.Kd*(0.0 - qvel[3]);
-	xdd(16,0) = PD_Pitch.Kp*(0.0 - qpos[4]) + PD_Pitch.Kd*(0.0 - qvel[4]);
-	xdd(17,0) = PD_Pitch.Kp*(0.0 - qpos[5]) + PD_Pitch.Kd*(0.0 - qvel[5]);
+
+	double quat[4];
+	double euler[3];
+	cassie.GetMainBodyQuaternion(quat);
+	quaternionToEuler(quat, euler);
+	xdd(15,0) = PD_Pitch.Kp*(0.0 - euler[0]) + PD_Pitch.Kd*(0.0 - qvel[3]);
+	xdd(16,0) = PD_Pitch.Kp*(0.0 - euler[1]) + PD_Pitch.Kd*(0.0 - qvel[4]);
+	xdd(17,0) = 0.0*PD_Pitch.Kp*(0.0 - euler[2]) + PD_Pitch.Kd*(0.0 - qvel[5]);
 
 //	printf("Attitude\n");
 //	printf("roll: %f\t%f\t%f\n", qpos[3], qvel[3], xdd(15,0));

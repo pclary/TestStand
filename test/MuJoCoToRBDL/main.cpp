@@ -27,7 +27,7 @@ int main(int argc,char* argv[]) {
 	mjData* mj_Data = mj_makeData(mj_Model);
 	mjData* mj_Data_recon = mj_makeData(mj_Model);
 
-	double qpos_init[] = {0.0, 0.0, 0.939, 1.0, 0.0, 0.0, 0.0,
+	double qpos_init[] = {0.0, 0.0, 0.939, 0.707, 0.0, 0.0, 0.707,
 			0.0, 0.0, 0.68111815, -1.40730357, 1.62972042, -1.77611107, -0.61968407,
 			0.0, 0.0, 0.68111815, -1.40730353, 1.62972043, -1.77611107, -0.61968402};
 	mju_copy(mj_Data->qpos, qpos_init, nX);
@@ -48,7 +48,7 @@ int main(int argc,char* argv[]) {
 
 	//initiate comms
 
-	double qpos_rbdl[nQ];
+	double qpos_rbdl[nX];
 	double qvel_rbdl[nQ];
 	int nRows = 4000;
 	while (nRows--) {
@@ -80,23 +80,27 @@ int main(int argc,char* argv[]) {
 //		cassie.GetMassMatrix(&rbdl_mass);
 //		std::cout << "RBDL Mass:\n" << rbdl_mass << std::endl;
 //
-//		printf("MuJoCo Site Pos:\n");
-//		printf("%f\t%f\t%f\n", mj_Data->site_xpos[6], mj_Data->site_xpos[7], mj_Data->site_xpos[8]);
-//
-//		RigidBodyDynamics::Math::VectorNd x = RigidBodyDynamics::Math::VectorNd::Zero(DOF*XDD_TARGETS);
-//		RigidBodyDynamics::Math::VectorNd xd = RigidBodyDynamics::Math::VectorNd::Zero(DOF*XDD_TARGETS);
-//
-//		int targids[] = {1,2,3,4,5};
-//		cassie.GetTargetPoints(&x, &xd, targids);
-//
+		printf("Site Pos:\n");
+		printf("%f\t%f\t%f\n", mj_Data->site_xpos[6], mj_Data->site_xpos[7], mj_Data->site_xpos[8]);
+
+		RigidBodyDynamics::Math::VectorNd x = RigidBodyDynamics::Math::VectorNd::Zero(DOF*XDD_TARGETS);
+		RigidBodyDynamics::Math::VectorNd xd = RigidBodyDynamics::Math::VectorNd::Zero(DOF*XDD_TARGETS);
+
+		int targids[] = {1,2,3,4,5};
+		cassie.GetTargetPoints(&x, &xd, targids);
+
 //		printf("RBDL Site Pos:\n");
-//		printf("%f\t%f\t%f\n", x(3), x(4), x(5));
+		printf("%f\t%f\t%f\n", x(3), x(4), x(5));
+		printf("%f\t%f\t%f\n", qpos_rbdl[3], qpos_rbdl[4], qpos_rbdl[5]);
 
 		for (int i = 0; i < 3; i++)
 			mj_Data_recon->qpos[i]=qpos_rbdl[i];
-		for (int i = 6; i < nQ; i++)
-			mj_Data_recon->qpos[i+1] = qpos_rbdl[i];
-		eulerToQuaternion(&(qpos_rbdl[3]), &(mj_Data_recon->qpos[3]));
+		double quat[4];
+		cassie.GetMainBodyQuaternion(quat);
+		for (int i = 3; i < 7; i++)
+			mj_Data_recon->qpos[i] = quat[i-3];
+		for (int i = 7; i < nX; i++)
+			mj_Data_recon->qpos[i] = qpos_rbdl[i-1];
 
 		for (int i = 0; i < nQ; i++)
 			mj_Data_recon->qvel[i] = qvel_rbdl[i];

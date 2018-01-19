@@ -42,9 +42,9 @@ int main() {
 
 	ControlObjective cntrl;
 
-	robot.SetCOMGains(100.0, 20.0);
-	robot.SetStanceGains(100.0, 30.0);
-	robot.SetJointGains(100.0, 20.0);
+	robot.SetCOMGains(100.0, 10.0);
+	robot.SetStanceGains(100.0, 10.0);
+	robot.SetJointGains(50.0, 1.0);
 
 	double t = 0.0; //for time varying profiles (uses discrete 2kHz)
 
@@ -52,8 +52,8 @@ int main() {
 	{
 		//uncomment the profile you want
 		//if recompiling becomes a pain in the ass then just send in a single argument for what profile you want
-		profileLineZ(&cntrl, t);
-//		profileSetPoint(&cntrl);
+//		profileLineZ(&cntrl, t);
+		profileSetPoint(&cntrl);
 
 		if (!robot.Run(cntrl))
 		{

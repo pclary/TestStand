@@ -226,7 +226,7 @@ bool udp_comms::send(unsigned char* buff, unsigned int numBytes)
 	if (!m_bClient)
 	{
 		//Send some data
-		if( sendto(sock , buff ,numBytes , 0, (struct sockaddr *) &remaddr, sizeof(server)) < 0)
+		if( sendto(sock , buff ,numBytes , 0, (struct sockaddr *) &server, sizeof(server)) < 0)
 		{
 			printf("Send failed : %s\n", strerror(errno));
 			return false;

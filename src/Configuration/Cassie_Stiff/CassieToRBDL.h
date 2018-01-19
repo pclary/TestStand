@@ -45,10 +45,10 @@ static void CassieOutputsToState(DynamicModel* dyn, cassie_out_t sensors, double
 	qpos[11] = sensors.leftLeg.footJoint.position;
 	qvel[11] = sensors.leftLeg.footJoint.velocity;
 
-	qpos[13] = sensors.rightLeg.hipRollDrive.position;
-	qvel[13] = sensors.rightLeg.hipRollDrive.velocity;
-	qpos[14] = sensors.rightLeg.hipYawDrive.position;
-	qvel[14] = sensors.rightLeg.hipYawDrive.velocity;
+	qpos[13] = -sensors.rightLeg.hipRollDrive.position;
+	qvel[13] = -sensors.rightLeg.hipRollDrive.velocity;
+	qpos[14] = -sensors.rightLeg.hipYawDrive.position;
+	qvel[14] = -sensors.rightLeg.hipYawDrive.velocity;
 	qpos[15] = sensors.rightLeg.hipPitchDrive.position;
 	qvel[15] = sensors.rightLeg.hipPitchDrive.velocity;
 	qpos[16] = sensors.rightLeg.kneeDrive.position;
@@ -162,11 +162,11 @@ static void CassieOutputsToState(DynamicModel* dyn, cassie_out_t sensors, double
 	}
 
 	qpos[0] += world_point_pos(0) - point_pos(0);
-	qvel[0] += world_point_vel(0) - point_vel(0);
+	qvel[0] -= point_vel(0);
 	qpos[1] += world_point_pos(1) - point_pos(1);
-	qvel[1] += world_point_vel(1) - point_vel(1);
+	qvel[1] -= point_vel(1);
 	qpos[2] += world_point_pos(2) - point_pos(2);
-	qvel[2] += world_point_vel(2) - point_vel(2);
+	qvel[2] -= point_vel(2);
 
 
 	foot_con_idx = min_foot_idx;
@@ -201,6 +201,8 @@ static void TorqueToCassieInputs(double* u, cassie_user_in_t* command)
 {
 	for (int i = 0; i < nU; i++)
 		command->torque[i] = u[i];
+	command->torque[5] *= -1.0;
+	command->torque[6] *= -1.0;
 }
 
 static void CassieInputsToTorque(cassie_user_in_t command, double* u)

@@ -38,7 +38,7 @@ bool udp_comms::conn()
 	local_addr = make_sockaddr_in(local_address_str.c_str(), PORT);
 	remote_addr = make_sockaddr_in(remote_address_str.c_str(), PORT);
 
-	sock = socket(AF_INET , SOCK_DGRAM , IPPROTO_UDP);
+	sock = socket(AF_INET , SOCK_DGRAM , 0);
 	if (sock == -1)
 	{
 		printf("Could not create socket\n");
@@ -73,7 +73,7 @@ bool udp_comms::conn()
  */
 bool udp_comms::receive_cassie_outputs(cassie_out_t* data)
 {
-	unsigned int numBytes = sizeof(cassie_out_t) + 2;
+	unsigned int numBytes = 1235;//sizeof(cassie_out_t) + 2;
 	unsigned char buff[numBytes];
 
 	if (!receive(buff, numBytes))
@@ -86,7 +86,7 @@ bool udp_comms::receive_cassie_outputs(cassie_out_t* data)
 
 bool udp_comms::send_cassie_outputs(cassie_out_t data) {
 
-	unsigned int numBytes = sizeof(cassie_out_t) + 2;
+	unsigned int numBytes = 1235;//sizeof(cassie_out_t) + 2;
 	unsigned char buff[numBytes];
 
 	pack_cassie_out_t(&data, &(buff[2]));
@@ -152,7 +152,7 @@ bool udp_comms::receive_telemetry(telemetry_t* t)
 bool udp_comms::receive(unsigned char* buff, unsigned int num_bytes)
 {
     // Poll for a new packet of the correct length
-    ssize_t nbytes;
+    unsigned int nbytes;
     do {
         // Wait if no packets are available
         struct pollfd fd;

@@ -10,7 +10,7 @@
 TestBenchInterface::TestBenchInterface() {
 	// TODO Auto-generated constructor stub
 #ifdef EMBEDDED
-	comms = new udp_comms("10.10.10.3", "10.10.10.100", 25000);
+	comms = new udp_comms("10.10.10.100", "10.10.10.3", 25000);
 	comms_vis = new udp_comms("192.168.1.148", "192.168.1.101", 8880);
 #else
 	comms_tx = new udp_comms(false, 25001, "127.0.0.1");
@@ -85,6 +85,8 @@ bool TestBenchInterface::Run(ControlObjective cntrl, double* bRadio)
 	while (!comms->receive_cassie_outputs(&sensors))
 		if (num_retries++ > 5)
 			return false;
+
+	printf("receiving\n");
 
 	CassieOutputsToState(&cassie, sensors, qpos, qvel);
 	cassie.setState(qpos, qvel);

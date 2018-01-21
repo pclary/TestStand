@@ -86,8 +86,6 @@ bool TestBenchInterface::Run(ControlObjective cntrl, double* bRadio)
 		if (num_retries++ > 5)
 			return false;
 
-	printf("receiving\n");
-
 	CassieOutputsToState(&cassie, sensors, qpos, qvel);
 	cassie.setState(qpos, qvel);
 

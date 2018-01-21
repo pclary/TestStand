@@ -17,6 +17,7 @@
 #include "SharedRobotDefinitions.h"
 #include "DynamicModel.h"
 #include "DynamicState.h"
+#include <fstream>
 
 
 class OSC_RBDL {
@@ -96,6 +97,16 @@ private:
 	static constexpr double m_dWeight_Tau = 1e-6;//0.000002;
 	static constexpr double m_dWeight_Fx = 1e-4;
 	static constexpr double m_dWeight_Fz = 1e-4;
+
+	void LogMatrices(double* x);
+
+	std::ofstream hFile;
+	std::ofstream xFile;
+	std::ofstream gtFile;
+	std::ofstream CFile;
+	std::ofstream CEFile;
+	std::ofstream mFile;
+	std::ofstream JeqFile;
 };
 
 

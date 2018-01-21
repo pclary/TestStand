@@ -23,6 +23,14 @@ OSC_RBDL::OSC_RBDL(int* targIds) {
 	qpOptions.setToMPC( );
 	qpOptions.printLevel = qpOASES::PL_NONE;
 	qp->setOptions( qpOptions );
+
+	hFile.open("H.csv");
+	gtFile.open("gt.csv");
+	CEFile.open("CE.csv");
+	CFile.open("C.csv");
+	xFile.open("X.csv");
+	mFile.open("M.csv");
+	JeqFile.open("Jeq.csv");
 }
 
 void OSC_RBDL::InitMatrices(DynamicModel* dyn) {
@@ -167,7 +175,7 @@ void OSC_RBDL::RunPTSC(DynamicModel* dyn, DynamicState* dyn_state, Matrix<double
 
 	Matrix<double, nQstiff, nQstiff> I = Matrix<double, nQstiff, nQstiff>::Identity();
 	Matrix<double, nQstiff, nQstiff> Hinv = M.inverse();
-	Matrix<double, nEQ, nEQ> JHinvJ = pseudoinverse(Jeq*Hinv*Jeq.transpose());//.completeOrthogonalDecomposition().pseudoInverse();
+	Matrix<double, nEQ, nEQ> JHinvJ = pseudoinverse(Jeq*Hinv*Jeq.transpose(), 1e-3);//.completeOrthogonalDecomposition().pseudoInverse();
 
 	Nc = I - Jeq.transpose()*JHinvJ*Jeq*Hinv;
 	gamma = Jeq.transpose()*JHinvJ*JeqdotQdot;
@@ -219,6 +227,8 @@ void OSC_RBDL::RunPTSC(DynamicModel* dyn, DynamicState* dyn_state, Matrix<double
 	for (int i = 0; i < nU; i++)
 		(*u)(i,0) = xtemp[nQstiff+i];
 
+//	LogMatrices(xtemp);
+
 //	if (!status)
 //		printf("QP SOLVE ERROR!!!\n");
 
@@ -238,7 +248,8 @@ bool OSC_RBDL::SolveQP(double* H_, double* g_, double* CE_, double* ce_,
 {
 	static bool bFirstCall = true;
 
-	qpOASES::int_t nWSR = 100;
+	qpOASES::int_t nWSR_first = 1000;
+	qpOASES::int_t nWSR_hot = 100;
 	qpOASES::returnValue eRet = qpOASES::SUCCESSFUL_RETURN;
 
 	double CE_C[(nQstiff+nCON*4*(DOF-1))*(nQstiff+nU+nCON*(2*(DOF-1)+1))];
@@ -268,17 +279,56 @@ bool OSC_RBDL::SolveQP(double* H_, double* g_, double* CE_, double* ce_,
 
 
 	if (bFirstCall)
-		eRet = qp->init(H_, g_, CE_C, lb_, ub_, lbA, ubA, nWSR, 0);
+		eRet = qp->init(H_, g_, CE_C, lb_, ub_, lbA, ubA, nWSR_first, 0);
 	else
-		eRet = qp->hotstart(H_, g_, CE_C, lb_, ub_, lbA, ubA, nWSR, 0);
+		eRet = qp->hotstart(H_, g_, CE_C, lb_, ub_, lbA, ubA, nWSR_hot, 0);
 
 	qp->getPrimalSolution(x_res);
 
+	printf("qp ret: %d\n", (int)(eRet));
+	bFirstCall = false;
+
 	if (eRet == qpOASES::SUCCESSFUL_RETURN)
 	{
-		bFirstCall = false;
 		return true;
 	}
 
 	return false;
+}
+
+void OSC_RBDL::LogMatrices(double* x)
+{
+	for (int i = 0; i < nQstiff+nU+nCON*(2*(DOF-1)+1) - 1; i++)
+		xFile << x[i] << ",";
+	xFile << x[nQstiff+nU+nCON*(2*(DOF-1)+1) - 1] << std::endl;
+
+	for (int i = 0; i < H.rows(); i++)
+		for (int j = 0; j < H.cols(); j++)
+			hFile << H(i,j) << ",";
+	hFile << std::endl;
+
+	for (int i = 0; i < gt.cols(); i++)
+		gtFile << gt(0,i) << ",";
+	gtFile << std::endl;
+
+	for (int i = 0; i < CE.rows(); i++)
+		for (int j = 0; j < CE.cols(); j++)
+			CEFile << CE(i,j) << ",";
+	CEFile << std::endl;
+
+	for (int i = 0; i < C.rows(); i++)
+		for (int j = 0; j < C.cols(); j++)
+			CFile << C(i,j) << ",";
+	CFile << std::endl;
+
+	for (int i = 0; i < Jeq.rows(); i++)
+		for (int j = 0; j < Jeq.cols(); j++)
+			JeqFile << Jeq(i,j) << ",";
+	JeqFile << std::endl;
+
+	for (int i = 0; i < M.rows(); i++)
+		for (int j = 0; j < M.cols(); j++)
+			mFile << M(i,j) << ",";
+	mFile << std::endl;
+
 }

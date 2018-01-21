@@ -8,110 +8,65 @@ using namespace std;
 
 #define BUFLEN 512
 
-udp_comms::udp_comms(bool bClient, unsigned int port, string ip_addr)
+udp_comms::udp_comms(std::string local_addr, std::string remote_addr, unsigned int port)
 {
-	m_bClient = bClient;
 	sock = -1;
 	PORT = port;
-	ip_address = ip_addr;
+	local_address_str = local_addr;
+	remote_address_str = remote_addr;
 }
+
+
+// Construct an address struct given an address string and port number
+struct sockaddr_in udp_comms::make_sockaddr_in(const char *addr_str, unsigned short port)
+{
+    struct sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    inet_pton(AF_INET, addr_str, &addr.sin_addr);
+    addr.sin_port = htons(port);
+    memset(&addr.sin_zero, 0, sizeof(addr.sin_zero));
+    return addr;
+}
+
 
 /**
     Connect to a host on a certain port number
  */
 bool udp_comms::conn()
 {
-	if (m_bClient)
-		return client_conn();
-	else
-		return server_conn();
-}
 
-bool udp_comms::client_conn()
-{
-	//create socket if it is not already created
-	if(sock == -1)
-	{
-		//Create socket
-		sock = socket(AF_INET , SOCK_DGRAM , IPPROTO_UDP);
-		if (sock == -1)
-		{
-			printf("Could not create socket\n");
-		}
-	}
-	else    {   /* OK , nothing */  }
+	local_addr = make_sockaddr_in(local_address_str.c_str(), PORT);
+	remote_addr = make_sockaddr_in(remote_address_str.c_str(), PORT);
 
-	server.sin_family = AF_INET;
-	server.sin_port = htons( PORT );
-	if (inet_aton(ip_address.c_str() , &server.sin_addr) == 0)
+	sock = socket(AF_INET , SOCK_DGRAM , IPPROTO_UDP);
+	if (sock == -1)
 	{
-		printf("inet_aton() failed\n");
+		printf("Could not create socket\n");
 		return false;
 	}
+
+	// Bind to local address
+	if (-1 == bind(sock,
+				   (struct sockaddr *) &local_addr,
+				   sizeof (struct sockaddr))) {
+		perror("Error binding to local address: ");
+		close(sock);
+		return false;
+	}
+
+	// Connect to remote address
+	if (-1 == connect(sock,
+					  (struct sockaddr *) &remote_addr,
+					  sizeof (struct sockaddr))) {
+		perror("Error connecting to remote address: ");
+		close(sock);
+		return false;
+	}
+
+    fcntl(sock, O_NONBLOCK);
 
 	return true;
 }
-
-bool udp_comms::server_conn()
-{
-
-	//create socket if it is not already created
-	if(sock == -1)
-	{
-		//Create socket
-		sock = socket(AF_INET , SOCK_DGRAM , IPPROTO_UDP);
-		if (sock == -1)
-		{
-			printf("Could not create socket\n");
-		}
-	}
-	else    {   /* OK , nothing */  }
-
-	//	server.sin_addr.s_addr = htonl(INADDR_ANY);
-	server.sin_family = AF_INET;
-	server.sin_port = htons( PORT );
-	if (inet_aton(ip_address.c_str() , &server.sin_addr) == 0)
-	{
-		printf("inet_aton() failed\n");
-		return false;
-	}
-
-	//pretty much the same as client but bind socket for server
-	if( bind(sock, (struct sockaddr*)&server, sizeof(server) ) == -1)
-	{
-		printf("failed to bind socket... %s\n", strerror(errno));
-		return false;
-	}
-
-
-	return true;
-
-}
-
-//bool udp_comms::receive_double(double *rx)
-//{
-//	unsigned int numBytes = sizeof(double);
-//	char buff[numBytes];
-//	if (!receive(buff, numBytes))
-//		return false;
-//
-//	memcpy(rx, buff, numBytes);
-//
-//	return true;
-//}
-//
-//bool udp_comms::send_double(double tx)
-//{
-//	unsigned int numBytes = sizeof(double);
-//	char buff[numBytes];
-//
-//	memcpy(buff, &tx, numBytes);
-//	if (!send(buff, numBytes))
-//		return false;
-//
-//	return true;
-//}
-
 
 /**
     Receive data from the connected host
@@ -196,26 +151,26 @@ bool udp_comms::receive_telemetry(telemetry_t* t)
 
 bool udp_comms::receive(unsigned char* buff, unsigned int num_bytes)
 {
-	socklen_t rcv_len = num_bytes;
-	//Receive a reply from the server
-	if (!m_bClient)
-	{
-		if( recvfrom(sock , buff , num_bytes , 0, (struct sockaddr *) &remaddr, &rcv_len) < 0)
-		{
-			printf("recv failed: %s\n", strerror(errno));
-			return false;
-		}
-	}
-	else
-	{
-		if( recvfrom(sock , buff , num_bytes , 0, (struct sockaddr *) &server, &rcv_len) < 0)
-		{
-			printf("recv failed: %s\n", strerror(errno));
-			return false;
-		}
-	}
+    // Poll for a new packet of the correct length
+    ssize_t nbytes;
+    do {
+        // Wait if no packets are available
+        struct pollfd fd;
+        fd.fd = sock; fd.events = POLLIN; fd.revents = 0;
+        while (!poll(&fd, 1, 0)) {}
 
-	return true;
+        // Get newest valid packet in RX buffer
+        // Does not use sequence number for determining newest packet
+        while (poll(&fd, 1, 0)) {
+            ioctl(sock, FIONREAD, &nbytes);
+            if (num_bytes == nbytes)
+                nbytes = recv(sock, buff, num_bytes, 0);
+            else
+                recv(sock, buff, 0, 0); // Discard packet
+        }
+    } while (num_bytes != nbytes);
+
+    return true;
 }
 
 /*
@@ -223,24 +178,6 @@ bool udp_comms::receive(unsigned char* buff, unsigned int num_bytes)
  */
 bool udp_comms::send(unsigned char* buff, unsigned int numBytes)
 {
-	if (!m_bClient)
-	{
-		//Send some data
-		if( sendto(sock , buff ,numBytes , 0, (struct sockaddr *) &server, sizeof(server)) < 0)
-		{
-			printf("Send failed : %s\n", strerror(errno));
-			return false;
-		}
-	}
-	else
-	{
-		//Send some data
-		if( sendto(sock , buff , numBytes , 0, (struct sockaddr *) &server, sizeof(server)) < 0)
-		{
-			printf("Send failed : %s\n", strerror(errno));
-			return false;
-		}
-	}
-
+	send(sock, buff, numBytes, 0);
 	return true;
 }

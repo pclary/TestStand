@@ -285,7 +285,7 @@ bool OSC_RBDL::SolveQP(double* H_, double* g_, double* CE_, double* ce_,
 
 	qp->getPrimalSolution(x_res);
 
-	printf("qp ret: %d\n", (int)(eRet));
+//	printf("qp ret: %d\n", (int)(eRet));
 	bFirstCall = false;
 
 	if (eRet == qpOASES::SUCCESSFUL_RETURN)

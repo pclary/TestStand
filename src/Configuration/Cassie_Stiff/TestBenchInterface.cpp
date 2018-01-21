@@ -10,9 +10,8 @@
 TestBenchInterface::TestBenchInterface() {
 	// TODO Auto-generated constructor stub
 #ifdef EMBEDDED
-	comms_tx = new udp_comms(true, 25000, "10.10.10.3");
-	comms_rx = new udp_comms(false, 25000, "10.10.10.100");
-	comms_vis = new udp_comms(true, 8880, "192.168.1.101");
+	comms = new udp_comms("10.10.10.3", "10.10.10.100", 25000);
+	comms_vis = new udp_comms("192.168.1.148", "192.168.1.101", 8880);
 #else
 	comms_tx = new udp_comms(false, 25001, "127.0.0.1");
 	comms_rx = new udp_comms(false, 25000, "127.0.0.1");
@@ -50,19 +49,11 @@ TestBenchInterface::~TestBenchInterface() {
 
 bool TestBenchInterface::Init() {
 
-	if (!comms_tx->conn())
+	if (!comms->conn())
 	{
 		printf("Failed to connect... returning\n");
 		return false;
 	}
-	if (!comms_rx->conn())
-	{
-		printf("Failed to connect... returning\n");
-		return false;
-	}
-#ifndef EMBEDDED
-	comms_tx = comms_rx;
-#endif
 	if (!comms_vis->conn())
 	{
 		printf("Failed to connect to visualizer... continuing\n");
@@ -72,7 +63,7 @@ bool TestBenchInterface::Init() {
 	cassie.LoadModel(xml_model_filename);
 
 	int num_retries = 0;
-	while (!comms_rx->receive_cassie_outputs(&sensors))
+	while (!comms->receive_cassie_outputs(&sensors))
 		if (num_retries++ > 5)
 			return false;
 
@@ -91,7 +82,7 @@ bool TestBenchInterface::Run(ControlObjective cntrl, double* bRadio)
 
 	static int vis_tx_rate = 0;
 	int num_retries = 0;
-	while (!comms_rx->receive_cassie_outputs(&sensors))
+	while (!comms->receive_cassie_outputs(&sensors))
 		if (num_retries++ > 5)
 			return false;
 
@@ -138,9 +129,7 @@ bool TestBenchInterface::Run(ControlObjective cntrl, double* bRadio)
 	command.torque[9] *= sensors.rightLeg.footDrive.gearRatio;
 #endif
 
-//#ifndef EMBEDDED
-	bTxSuccess = comms_tx->send_cassie_inputs(command);
-//#endif
+	bTxSuccess = comms->send_cassie_inputs(command);
 
         clock_gettime(CLOCK_REALTIME, &tf);
 	stats.dt_nsec = diff(ts,tf).tv_nsec;

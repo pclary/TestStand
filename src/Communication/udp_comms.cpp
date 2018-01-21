@@ -18,9 +18,9 @@ udp_comms::udp_comms(std::string local_addr, std::string remote_addr, unsigned i
 
 
 // Construct an address struct given an address string and port number
-struct sockaddr_in udp_comms::make_sockaddr_in(const char *addr_str, unsigned short port)
+sockaddr_in udp_comms::make_sockaddr_in(const char *addr_str, unsigned short port)
 {
-    struct sockaddr_in addr;
+    sockaddr_in addr;
     addr.sin_family = AF_INET;
     inet_pton(AF_INET, addr_str, &addr.sin_addr);
     addr.sin_port = htons(port);
@@ -63,7 +63,7 @@ bool udp_comms::conn()
 		return false;
 	}
 
-    fcntl(sock, O_NONBLOCK);
+	fcntl(sock, O_NONBLOCK);
 
 	return true;
 }
@@ -91,7 +91,7 @@ bool udp_comms::send_cassie_outputs(cassie_out_t data) {
 
 	pack_cassie_out_t(&data, &(buff[2]));
 
-	if (!send(buff, numBytes))
+	if (!transmit(buff, numBytes))
 		return false;
 
 	return true;
@@ -117,7 +117,7 @@ bool udp_comms::send_cassie_inputs(cassie_user_in_t data) {
 
 	pack_cassie_user_in_t(&data, &(buff[2]));
 
-	if (!send(buff, numBytes))
+	if (!transmit(buff, numBytes))
 		return false;
 
 	return true;
@@ -130,7 +130,7 @@ bool udp_comms::send_telemetry(telemetry_t t)
 
 	memcpy(buff, &t, numBytes);
 
-	if (!send(buff, numBytes))
+	if (!transmit(buff, numBytes))
 		return false;
 
 	return true;
@@ -176,7 +176,7 @@ bool udp_comms::receive(unsigned char* buff, unsigned int num_bytes)
 /*
     Send data to the connected host
  */
-bool udp_comms::send(unsigned char* buff, unsigned int numBytes)
+bool udp_comms::transmit(unsigned char* buff, unsigned int numBytes)
 {
 	send(sock, buff, numBytes, 0);
 	return true;

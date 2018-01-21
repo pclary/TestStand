@@ -10,6 +10,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h> //hostent
+#include <unistd.h>
+#include <fcntl.h>
 #include "Command_Structs.h"
 #include "SharedRobotDefinitions.h"
 #include <string>
@@ -24,9 +26,9 @@ private:
     struct sockaddr_in remote_addr;
 
     bool receive(unsigned char* buff, unsigned int num_bytes);
-    bool send(unsigned char* buff, unsigned int numBytes);
+    bool transmit(unsigned char* buff, unsigned int numBytes);
 
-    struct sockaddr_in udp_comms::make_sockaddr_in(const char *addr_str, unsigned short port);
+    sockaddr_in make_sockaddr_in(const char *addr_str, unsigned short port);
 
     unsigned int PORT;
     std::string local_address_str;

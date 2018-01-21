@@ -54,8 +54,7 @@ private:
 	DynamicState dyn_state;
 	OSC_RBDL* osc;
 
-	udp_comms* comms_tx;
-	udp_comms* comms_rx;
+	udp_comms* comms;
 	udp_comms* comms_vis;
 
 	cassie_out_t sensors;

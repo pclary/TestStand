@@ -23,11 +23,11 @@ void profileLineZ(ControlObjective* cntrl, double t)
 
 void profileSetPoint(ControlObjective* cntrl, double* bRadio)
 {
-	double targZ = 0.65 + 0.3*bRadio[7];
+	double targZ = 0.7 + 0.3*bRadio[7];
 
 	cntrl->bodyZPos = targZ;
 	cntrl->bodyZVel = 0.0;
-	cntrl->bodyZAcc = 9.806;
+	cntrl->bodyZAcc = 0.0;//9.806;
 }
 
 int main() {
@@ -43,17 +43,17 @@ int main() {
 	ControlObjective cntrl;
 
 	PD_CONTROLLER PD_COM_X;
-	PD_COM_X.Kp = 50.0; PD_COM_X.Kd = 5.0;
+	PD_COM_X.Kp = 10.0; PD_COM_X.Kd = 1.0;
 	PD_CONTROLLER PD_COM_Y;
 	PD_COM_Y.Kp = 10.0; PD_COM_Y.Kd = 1.0;
 	PD_CONTROLLER PD_COM_Z;
-	PD_COM_Z.Kp = 50.0; PD_COM_Z.Kd = 5.0;
+	PD_COM_Z.Kp = 10.0; PD_COM_Z.Kd = 1.0;
 	PD_CONTROLLER PD_Pitch;
 	PD_Pitch.Kp = 10.0; PD_Pitch.Kd = 1.0;
 	PD_CONTROLLER PD_StanceXY;
-	PD_StanceXY.Kp = 50.0; PD_StanceXY.Kd = 5.0;
+	PD_StanceXY.Kp = 10.0; PD_StanceXY.Kd = 0.1;
 	PD_CONTROLLER PD_StanceZ;
-	PD_StanceZ.Kp = 50.0; PD_StanceZ.Kd = 5.0;
+	PD_StanceZ.Kp = 10.0; PD_StanceZ.Kd = 1.0;
 
 	robot.SetCOMXGains(PD_COM_X.Kp, PD_COM_X.Kd);
 	robot.SetCOMYGains(PD_COM_Y.Kp, PD_COM_Y.Kd);

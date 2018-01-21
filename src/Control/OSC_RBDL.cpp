@@ -250,6 +250,7 @@ bool OSC_RBDL::SolveQP(double* H_, double* g_, double* CE_, double* ce_,
 
 	qpOASES::int_t nWSR_first = 1000;
 	qpOASES::int_t nWSR_hot = 100;
+	qpOASES::real_t dTimeLimit_s = 5e-4;
 	qpOASES::returnValue eRet = qpOASES::SUCCESSFUL_RETURN;
 
 	double CE_C[(nQstiff+nCON*4*(DOF-1))*(nQstiff+nU+nCON*(2*(DOF-1)+1))];
@@ -281,7 +282,7 @@ bool OSC_RBDL::SolveQP(double* H_, double* g_, double* CE_, double* ce_,
 	if (bFirstCall)
 		eRet = qp->init(H_, g_, CE_C, lb_, ub_, lbA, ubA, nWSR_first, 0);
 	else
-		eRet = qp->hotstart(H_, g_, CE_C, lb_, ub_, lbA, ubA, nWSR_hot, 0);
+		eRet = qp->hotstart(H_, g_, CE_C, lb_, ub_, lbA, ubA, nWSR_hot, &dTimeLimit_s);
 
 	qp->getPrimalSolution(x_res);
 

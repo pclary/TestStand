@@ -86,6 +86,10 @@ bool TestBenchInterface::Run(ControlObjective cntrl, double* bRadio)
 		if (num_retries++ > 5)
 			return false;
 
+        clock_gettime(CLOCK_REALTIME, &tf);
+	stats.udp_dt_nsec = diff(ts,tf).tv_nsec;
+	ts = tf;
+
 	CassieOutputsToState(&cassie, sensors, qpos, qvel);
 	cassie.setState(qpos, qvel);
 
@@ -102,6 +106,10 @@ bool TestBenchInterface::Run(ControlObjective cntrl, double* bRadio)
 	Eigen::Matrix<double, nU, 1> u = Eigen::Matrix<double, nU, 1>::Zero();
 
 	telemetry_t telem;
+
+        clock_gettime(CLOCK_REALTIME, &tf);
+	stats.rbdl_dt_nsec = diff(ts,tf).tv_nsec;
+	ts = tf;
 
 	StandingController(&cassie, &dyn_state, cntrl, &u, &telem);
 
@@ -132,9 +140,13 @@ bool TestBenchInterface::Run(ControlObjective cntrl, double* bRadio)
 	bTxSuccess = comms->send_cassie_inputs(command);
 
         clock_gettime(CLOCK_REALTIME, &tf);
-	stats.dt_nsec = diff(ts,tf).tv_nsec;
+	stats.qp_dt_nsec = diff(ts,tf).tv_nsec;
+	ts = tf;
 
-	logStats();
+//	logStats(); //need to spin this off on another thread... currently causing time spikes
+        clock_gettime(CLOCK_REALTIME, &tf);
+	stats.log_dt_nsec = diff(ts,tf).tv_nsec;
+	ts = tf;
 
 	if (m_bVisConn)
 	{
@@ -173,6 +185,9 @@ bool TestBenchInterface::Run(ControlObjective cntrl, double* bRadio)
 			comms_vis->send_telemetry(telem);
 		}
 	}
+
+        clock_gettime(CLOCK_REALTIME, &tf);
+	stats.tx_dt_nsec = diff(ts,tf).tv_nsec;
 
 	return bTxSuccess;
 }
@@ -223,9 +238,9 @@ void TestBenchInterface::StandingController(DynamicModel* dyn, DynamicState* dyn
 		x_t(i) = x(i);
 	}
 
-	xdd(0,0) = PD_COM_X.Kp*(targBx - qpos[0]) + PD_COM_X.Kd*(0.0 - qvel[0]);
-	xdd(1,0) = PD_COM_Y.Kp*(targBy - qpos[1]) + PD_COM_Y.Kd*(0.0 - qvel[1]);
-	xdd(2,0) = PD_COM_Z.Kp*(cntrl.bodyZPos - qpos[2]) + PD_COM_Z.Kd*(cntrl.bodyZVel - qvel[2]) + cntrl.bodyZAcc;
+	xdd(0,0) = PD_COM_X.Kp*(targBx - x(0)) + PD_COM_X.Kd*(0.0 - xd(0));
+	xdd(1,0) = PD_COM_Y.Kp*(targBy - x(1)) + PD_COM_Y.Kd*(0.0 - xd(1));
+	xdd(2,0) = PD_COM_Z.Kp*(cntrl.bodyZPos - x(2)) + PD_COM_Z.Kd*(cntrl.bodyZVel - xd(2)) + cntrl.bodyZAcc;
 
 //	printf("COM\n");
 //	printf("x: %f\t%f\t%f\t%f\n", targBx, qpos[0], qvel[0], xdd(0,0));
@@ -315,5 +330,9 @@ void TestBenchInterface::logStats()
 		logFile << stats.xd[i] << ",";
 	for (int i = 0; i < nU; i++)
 		logFile << stats.torques[i] << ",";
-	logFile << stats.dt_nsec << std::endl;
+	logFile << stats.udp_dt_nsec << ",";
+	logFile << stats.rbdl_dt_nsec << ",";
+	logFile << stats.qp_dt_nsec << ",";
+	logFile << stats.tx_dt_nsec << ",";
+	logFile << stats.log_dt_nsec << std::endl;
 }

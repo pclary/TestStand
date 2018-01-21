@@ -42,7 +42,11 @@ typedef struct {
 #pragma pack(pop)
 
 typedef struct {
-	unsigned long dt_nsec;
+	unsigned long udp_dt_nsec;
+	unsigned long rbdl_dt_nsec;
+	unsigned long qp_dt_nsec;
+	unsigned long tx_dt_nsec;
+	unsigned long log_dt_nsec;
 	double qpos[nX];
 	double qvel[nQ];
 	double targ_pos[XDD_TARGETS*DOF + QDD_TARGETS];

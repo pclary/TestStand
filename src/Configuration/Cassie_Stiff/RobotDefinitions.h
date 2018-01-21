@@ -41,4 +41,18 @@ typedef struct {
 } telemetry_t;
 #pragma pack(pop)
 
+typedef struct {
+	unsigned long dt_nsec;
+	double qpos[nX];
+	double qvel[nQ];
+	double targ_pos[XDD_TARGETS*DOF + QDD_TARGETS];
+	double targ_vel[XDD_TARGETS*DOF + QDD_TARGETS];
+	double accels[XDD_TARGETS*DOF + QDD_TARGETS];
+	double x[XDD_TARGETS*DOF + QDD_TARGETS];
+	double xd[XDD_TARGETS*DOF + QDD_TARGETS];
+	double torques[nU];
+	double forces[nCON*DOF];
+} logVars_t;
+
+
 #endif /* ROBOTDEFINITIONS_H_ */

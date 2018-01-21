@@ -14,6 +14,10 @@
 #include "udp_comms.h"
 #include "Command_Structs.h"
 #include "CassieToRBDL.h"
+#include <iostream>
+#include <fstream>
+
+
 
 //x and z foot targets
 typedef struct {
@@ -44,6 +48,8 @@ private:
 	void UpdateStateEstimate();
 	void StandingController(DynamicModel* dyn, DynamicState* dyn_state, ControlObjective cntrl, Eigen::Matrix<double, nU, 1>* u, telemetry_t* telem);
 
+	void logStats();
+
 	DynamicModel cassie;
 	DynamicState dyn_state;
 	OSC_RBDL* osc;
@@ -54,6 +60,9 @@ private:
 
 	cassie_out_t sensors;
 	cassie_user_in_t command;
+
+	logVars_t stats;
+	std::ofstream logFile;
 
 	PD_CONTROLLER PD_COM_X;
 	PD_CONTROLLER PD_COM_Y;

@@ -40,6 +40,8 @@ TestBenchInterface::TestBenchInterface() {
 		qpos[i] = qvel[i] = 0.0;
 
 	m_bVisConn = true;
+
+	logFile.open("logfile.csv");
 }
 
 TestBenchInterface::~TestBenchInterface() {
@@ -84,6 +86,9 @@ bool TestBenchInterface::Init() {
 
 bool TestBenchInterface::Run(ControlObjective cntrl, double* bRadio)
 {
+	timespec ts, tf;
+        clock_gettime(CLOCK_REALTIME, &ts);
+
 	static int vis_tx_rate = 0;
 	int num_retries = 0;
 	while (!comms_rx->receive_cassie_outputs(&sensors))
@@ -92,6 +97,11 @@ bool TestBenchInterface::Run(ControlObjective cntrl, double* bRadio)
 
 	CassieOutputsToState(&cassie, sensors, qpos, qvel);
 	cassie.setState(qpos, qvel);
+
+	for (int i = 0; i < nX; i++)
+		stats.qpos[i] = qpos[i];
+	for (int i = 0; i < nQ; i++)
+		stats.qvel[i] = qvel[i];
 
 	for (int i = 0; i < 16; i++)
 		bRadio[i] = sensors.pelvis.radio.channel[i];
@@ -111,16 +121,31 @@ bool TestBenchInterface::Run(ControlObjective cntrl, double* bRadio)
 #ifdef EMBEDDED
 
 	if (sensors.pelvis.radio.channel[11] < 0.5)
-		for (int i = 0; i < 10; i++)
+	{	for (int i = 0; i < 10; i++)
 			command.torque[i] = 0.0;
+//		command.torque[1] = 0.5;
+//		command.torque[6] = 0.5;
+	}
+	command.torque[0] *= sensors.leftLeg.hipRollDrive.gearRatio;
+	command.torque[1] *= sensors.leftLeg.hipYawDrive.gearRatio;
 	command.torque[2] *= sensors.leftLeg.hipPitchDrive.gearRatio;
 	command.torque[3] *= sensors.leftLeg.kneeDrive.gearRatio;
 	command.torque[4] *= sensors.leftLeg.footDrive.gearRatio;
+	command.torque[5] *= sensors.rightLeg.hipRollDrive.gearRatio;
+	command.torque[6] *= sensors.rightLeg.hipYawDrive.gearRatio;
+	command.torque[7] *= sensors.rightLeg.hipPitchDrive.gearRatio;
+	command.torque[8] *= sensors.rightLeg.kneeDrive.gearRatio;
+	command.torque[9] *= sensors.rightLeg.footDrive.gearRatio;
 #endif
 
 //#ifndef EMBEDDED
 	bTxSuccess = comms_tx->send_cassie_inputs(command);
 //#endif
+
+        clock_gettime(CLOCK_REALTIME, &tf);
+	stats.dt_nsec = diff(ts,tf).tv_nsec;
+
+	logStats();
 
 	if (m_bVisConn)
 	{
@@ -238,6 +263,18 @@ void TestBenchInterface::StandingController(DynamicModel* dyn, DynamicState* dyn
 	xdd(16,0) = PD_Pitch.Kp*(0.0 - euler[1]) + PD_Pitch.Kd*(0.0 - qvel[4]);
 	xdd(17,0) = 0.0*PD_Pitch.Kp*(0.0 - euler[2]) + PD_Pitch.Kd*(0.0 - qvel[5]);
 
+
+	for (int i = 0; i < XDD_TARGETS*DOF; i++)
+	{
+		stats.x[i] = x(i);
+		stats.xd[i] = xd(i);
+	}
+	for (int i = XDD_TARGETS*DOF; i < XDD_TARGETS*DOF+QDD_TARGETS; i++)
+	{
+		stats.x[i] = euler[i - XDD_TARGETS*DOF];
+		stats.xd[i] = qvel[3 + i - XDD_TARGETS*DOF];
+	}
+
 //	printf("Attitude\n");
 //	printf("roll: %f\t%f\t%f\n", qpos[3], qvel[3], xdd(15,0));
 //	printf("pitch: %f\t%f\t%f\n", qpos[4], qvel[4], xdd(16,0));
@@ -257,12 +294,37 @@ void TestBenchInterface::StandingController(DynamicModel* dyn, DynamicState* dyn
 //	printf("\n");
 
 	for (int i = 0; i < nU; i++)
-		telem->torques[i] = (*u)(i,0);
+		stats.torques[i] = telem->torques[i] = (*u)(i,0);
 	for (int i = 0; i < XDD_TARGETS*DOF; i++)
 	{
 		telem->accels[i] = xdd(i);
 		telem->targ_pos[i] = x_t(i);
 	}
+	for (int i = 0; i < XDD_TARGETS*DOF+QDD_TARGETS; i++)
+	{
+		stats.accels[i] = xdd(i);
+		stats.targ_pos[i] = x_t(i);
+		stats.targ_vel[i] = xd_t(i);
+	}
 }
 
-
+void TestBenchInterface::logStats()
+{
+	for (int i = 0; i < nX; i++)
+		logFile << stats.qpos[i] << ",";
+	for (int i = 0; i < nQ; i++)
+		logFile << stats.qvel[i] << ",";
+	for (int i = 0; i < XDD_TARGETS*DOF + QDD_TARGETS; i++)
+		logFile << stats.targ_pos[i] << ",";
+	for (int i = 0; i < XDD_TARGETS*DOF + QDD_TARGETS; i++)
+		logFile << stats.targ_vel[i] << ",";
+	for (int i = 0; i < XDD_TARGETS*DOF + QDD_TARGETS; i++)
+		logFile << stats.accels[i] << ",";
+	for (int i = 0; i < XDD_TARGETS*DOF + QDD_TARGETS; i++)
+		logFile << stats.x[i] << ",";
+	for (int i = 0; i < XDD_TARGETS*DOF + QDD_TARGETS; i++)
+		logFile << stats.xd[i] << ",";
+	for (int i = 0; i < nU; i++)
+		logFile << stats.torques[i] << ",";
+	logFile << stats.dt_nsec << std::endl;
+}

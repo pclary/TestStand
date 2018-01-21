@@ -29,6 +29,6 @@ typedef struct {
 	double Kd;
 } PD_CONTROLLER;
 
-static constexpr double mu = 0.9;
+static constexpr double mu = 0.09;
 
 #endif /* SHAREDROBOTDEFINITIONS_H_ */

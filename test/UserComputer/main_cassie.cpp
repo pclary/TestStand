@@ -45,11 +45,11 @@ int main() {
 	PD_CONTROLLER PD_COM_X;
 	PD_COM_X.Kp = 50.0; PD_COM_X.Kd = 5.0;
 	PD_CONTROLLER PD_COM_Y;
-	PD_COM_Y.Kp = 50.0; PD_COM_Y.Kd = 5.0;
+	PD_COM_Y.Kp = 10.0; PD_COM_Y.Kd = 1.0;
 	PD_CONTROLLER PD_COM_Z;
 	PD_COM_Z.Kp = 50.0; PD_COM_Z.Kd = 5.0;
 	PD_CONTROLLER PD_Pitch;
-	PD_Pitch.Kp = 50.0; PD_Pitch.Kd = 5.0;
+	PD_Pitch.Kp = 10.0; PD_Pitch.Kd = 1.0;
 	PD_CONTROLLER PD_StanceXY;
 	PD_StanceXY.Kp = 50.0; PD_StanceXY.Kd = 5.0;
 	PD_CONTROLLER PD_StanceZ;

@@ -16,6 +16,7 @@
 #include "CassieToRBDL.h"
 #include <iostream>
 #include <fstream>
+#include "MPCOptions.h"
 
 #include <thread>
 #include <mutex>

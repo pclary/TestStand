@@ -9,7 +9,7 @@
 #include "CassieVis.h"
 #include "SharedRobotDefinitions.h"
 #include "CassieToMuJoCo.h"
-#include "mpc_nlp.h"
+#include "MPCOptions.h"
 
 #include <thread>
 #include <mutex>

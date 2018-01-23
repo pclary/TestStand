@@ -28,8 +28,7 @@ OUTDIR := $(HEADDIR)/bin
 #           code that you wrote in order to define the problem statement
 VISOBJS = $(VISDIR)/main_visual.o \
 	$(VISDIR)/CassieVis.o \
-	$(COMMDIR)/udp_comms.o \
-	$(SLIPDIR)/mpc_nlp.o
+	$(COMMDIR)/udp_comms.o
 
 PLANOBJS = $(PLANMAINDIR)/main.o \
 	$(SLIPDIR)/MPC.o \
@@ -38,15 +37,13 @@ PLANOBJS = $(PLANMAINDIR)/main.o \
 	$(PLANDIR)/Planner.o
 
 PHYSOBJS = $(PHYSDIR)/main_sim.o \
-	$(COMMDIR)/udp_comms.o \
-	$(SLIPDIR)/mpc_nlp.o
+	$(COMMDIR)/udp_comms.o
 
 MAINOBJS = $(SRCDIR)/DynamicModel.o \
 	$(SRCDIR)/DynamicState.o \
 	$(CTRLDIR)/OSC_RBDL.o \
 	$(CTRLDIR)/QPInterface.o \
-	$(COMMDIR)/udp_comms.o \
-	$(SLIPDIR)/mpc_nlp.o
+	$(COMMDIR)/udp_comms.o
 
 OBJS = $(VISOBJS) $(PHYSOBJS) $(MAINOBJS) $(PLANOBJS)
 

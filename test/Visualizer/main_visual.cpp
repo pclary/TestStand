@@ -77,6 +77,15 @@ int main(int argc,char* argv[]) {
 	}
 
 	MPC_OPTIONS* opt = new MPC_OPTIONS();
+	opt->num_phases = 17;
+
+	targ_traj.dt_c = 0.0;
+	ROM_TrajPt_Struct null_rom;
+	for (int i = 0; i < MAX_TRAJ_PTS; i++)
+		targ_traj.com_traj.push_back(null_rom);
+	ContactInfo_Struct null_con;
+	for (int i = 0; i < MAX_CON_SWITCH; i++)
+		targ_traj.con_sched.push_back(null_con);
 
 	thread commThread = thread(&receive_policy, comms_planner, opt);
 

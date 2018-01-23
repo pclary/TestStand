@@ -14,7 +14,6 @@
 #include <fcntl.h>
 #include "Command_Structs.h"
 #include "SharedRobotDefinitions.h"
-#include "CommandInterface.h"
 #include <string>
 /**
     TCP Client class
@@ -23,7 +22,6 @@ class udp_comms
 {
 private:
     int sock;
-    bool m_bBindFailed;
     struct sockaddr_in local_addr;
     struct sockaddr_in remote_addr;
 
@@ -43,14 +41,10 @@ public:
     bool receive_cassie_outputs(cassie_out_t* data);
     bool receive_cassie_inputs(cassie_user_in_t* data);
     bool receive_telemetry(telemetry_t* t);
-    bool receive_state_info(CommandInterface::StateInfo_Struct* s);
-    bool receive_policy_params(CommandInterface::policy_params_t* s);
 
     bool send_cassie_inputs(cassie_user_in_t data);
     bool send_cassie_outputs(cassie_out_t data);
     bool send_telemetry(telemetry_t t);
-    bool send_state_info(CommandInterface::StateInfo_Struct s);
-    bool send_policy_params(CommandInterface::policy_params_t s);
 
 };
 

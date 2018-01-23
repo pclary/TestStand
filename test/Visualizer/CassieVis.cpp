@@ -118,6 +118,8 @@ int CassieVis::Init(bool save_video, const char* win_title) {
 
 	m_bSaveVideo = save_video;
 
+	m_bPlanInit = false;
+
 	return 0;
 }
 
@@ -506,6 +508,9 @@ bool CassieVis::Draw(mjData* data, telemetry_t t)
 
 		mjv_updateScene(mj_Model, data, &mj_Opt, NULL, &mj_Cam, mjCAT_ALL, &mj_Scn);
 
+		if (m_bPlanInit)
+			DrawMPCPlan(data, t);
+
 		mjtNum pos[3];
 		pos[0] = t.targ_pos[0];
 		pos[1] = t.targ_pos[1];
@@ -571,6 +576,104 @@ bool CassieVis::Draw(mjData* data, telemetry_t t)
 	}
 
 	return false;
+}
+
+void CassieVis::DrawMPCPlan(mjData* data, telemetry_t t) {
+	for (unsigned int i = 0; i < plan_com_traj.size(); i++)
+	{
+		if (i % 5)
+			continue;
+
+		mjtNum pos[3];
+		pos[0] = plan_com_traj[i].x_m;
+		pos[1] = plan_com_traj[i].y_m;
+		pos[2] = plan_com_traj[i].z_m;
+
+		double sphereSize = 0.01;
+
+		float rgba[4] = {1.0, 0.1, 0.1, 1.0};
+
+		if (m_bSuccess)
+		{
+			rgba[0] = 0.1;
+			rgba[1] = 1.0;
+		}
+		mjtNum size[3] = {sphereSize,sphereSize,sphereSize*10};
+
+		mjtNum rot_mat[9];
+		mju_zero(rot_mat,9);
+		rot_mat[6] = 1.0;
+		double angle = plan_com_traj[i].a_rad;
+		rot_mat[2] = cos(angle);
+		rot_mat[1] = sin(angle);
+		rot_mat[5] = sin(angle);
+		rot_mat[4] = -cos(angle);
+		mjv_initGeom(&(mj_Scn.geoms[mj_Scn.ngeom]), mjGEOM_ARROW, size, pos, rot_mat, rgba);
+
+//		mjv_initGeom(&(mj_Scn.geoms[mj_Scn.ngeom]), mjGEOM_ELLIPSOID, size, pos, NULL, rgba );
+		mj_Scn.ngeom++;
+	}
+
+	for (unsigned int i = 0; i < plan_cop_traj.size(); i++)
+	{
+		mjtNum pos[3];
+		pos[0] = plan_cop_traj[i].x_m;
+		pos[1] = plan_cop_traj[i].y_m;
+		pos[2] = 0.0;
+
+		double sphereSize = 0.01;
+		float rgba[4] = {0.0, 0.0, 0.0, 1.0};
+
+		mjtNum size[3] = {sphereSize,sphereSize,sphereSize};
+
+		mjv_initGeom(&(mj_Scn.geoms[mj_Scn.ngeom]), mjGEOM_ELLIPSOID, size, pos, NULL, rgba );
+		mj_Scn.ngeom++;
+	}
+
+	for (unsigned int i = 0; i < plan_foot_pos.size(); i++)
+	{
+		mjtNum pos[3];
+		pos[0] = plan_foot_pos[i].lb.x_m;
+		pos[1] = plan_foot_pos[i].lb.y_m;
+		pos[2] = 0.0;
+
+		double sphereSize = 0.01;
+		float rgba[4] = {0.1, 1.0, 1.0, 1.0};
+
+		rgba[2] *= double(i % 2);
+
+		if (i < 8)
+		{
+			rgba[0] = 1.0;
+			rgba[1] = rgba[2] = 0.1;
+		}
+
+		mjtNum size[3] = {sphereSize,sphereSize,sphereSize};
+
+		mjv_initGeom(&(mj_Scn.geoms[mj_Scn.ngeom]), mjGEOM_ELLIPSOID, size, pos, NULL, rgba );
+		mj_Scn.ngeom++;
+
+		pos[0] = plan_foot_pos[i].ub.x_m;
+		pos[1] = plan_foot_pos[i].ub.y_m;
+		mjv_initGeom(&(mj_Scn.geoms[mj_Scn.ngeom]), mjGEOM_ELLIPSOID, size, pos, NULL, rgba );
+		mj_Scn.ngeom++;
+	}
+
+	//add user opt geometry
+	float rgba[4] = {1.0, 1.0, 1.0, 1.0};
+	mjtNum size[3] = {0.05, 0.05, 0.05};
+	mjtNum pos[3];
+	pos[0] = plan_com_traj[0].x_m + t.xT[0];
+	pos[1] = plan_com_traj[0].y_m + t.xT[1];
+	pos[2] = plan_com_traj[0].z_m + t.xT[2];
+	mjv_initGeom(&(mj_Scn.geoms[mj_Scn.ngeom]), mjGEOM_ELLIPSOID, size, pos, NULL, rgba);
+	mj_Scn.ngeom++;
+	mjv_addGeoms(mj_Model, data, &mj_Opt, NULL, mjCAT_DECOR, &mj_Scn);
+
+	mjrRect viewport = {0, 0, 0, 0};
+	glfwGetFramebufferSize(m_Window, &viewport.width, &viewport.height);
+
+
 }
 
 // mouse button

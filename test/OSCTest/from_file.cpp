@@ -6,6 +6,8 @@
 #include "DynamicState.h"
 #include "OSC_RBDL.h"
 #include <fstream>
+#include <sys/time.h>
+
 
 using namespace std;
 
@@ -58,6 +60,9 @@ int main(int argc,char* argv[]) {
 		for (int i = 0; i < XDD_TARGETS*DOF + QDD_TARGETS; i++)
 			xdd(i,0) = line_vals[i+77];
 
+		timespec ts, tf;
+		clock_gettime(CLOCK_REALTIME, &ts);
+
 		cassie.setState(qpos, qvel);
 
 		if (bFirst)
@@ -76,13 +81,15 @@ int main(int argc,char* argv[]) {
 
 		osc->RunPTSC(&cassie, &dyn_state, xdd, bActive, bInContact, &u);
 
+		clock_gettime(CLOCK_REALTIME, &tf);
+
 		for (int i = 0; i < nU; i++)
 			reconFile << u_old[i] << ",";
 
 		for (int i = 0; i < nU; i++)
 			reconFile << u(i,0) << ",";
 
-		reconFile << 0 << std::endl;
+		reconFile << diff(ts,tf).tv_nsec << std::endl;
 	}
 	reconFile.close();
 }

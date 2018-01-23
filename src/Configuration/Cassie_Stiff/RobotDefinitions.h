@@ -36,8 +36,10 @@ typedef struct {
 	uint8_t select_index;
 	double Kp[6];
 	double Kd[6];
-	double freq;
-	double amp;
+	double step_height;
+	double step_time;
+	double ds_perc;
+	double xT[3];
 } telemetry_t;
 #pragma pack(pop)
 

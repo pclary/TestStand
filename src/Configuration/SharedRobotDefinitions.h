@@ -11,8 +11,7 @@
 #include "Common_Structs.h"
 #include "RobotDefinitions.h"
 
-#define MAX_NUM_PHASES 37
-
+#define MAX_NUM_PHASES 17
 
 typedef struct {
 	double m_dTargetZPos_m;

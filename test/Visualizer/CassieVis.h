@@ -49,6 +49,38 @@ public:
 		m_nTargetIndex = idx;
 	}
 
+	void SetMPCPlan(ROM_Policy_Struct* targ_traj)
+	{
+		Point3D com;
+		Patch foot;
+		plan_com_traj.clear();
+		plan_cop_traj.clear();
+		plan_foot_pos.clear();
+		for (int i = 0; i < targ_traj->numPoints; i++)
+		{
+			com.x_m = targ_traj->com_traj[i].com[0];
+			com.y_m = targ_traj->com_traj[i].com[1];
+			com.z_m = targ_traj->com_traj[i].com[2];
+			com.a_rad = targ_traj->com_traj[i].com[3];
+			plan_com_traj.push_back(com);
+		}
+
+		for (int i = 0; i < targ_traj->numContactSwitch; i++)
+		{
+			foot.lb.x_m = targ_traj->con_sched[i].left[0] + cx[0]*cos(targ_traj->con_sched[i].left[3]);
+			foot.lb.y_m = targ_traj->con_sched[i].left[1] + cx[0]*sin(targ_traj->con_sched[i].left[3]);
+			foot.ub.x_m = targ_traj->con_sched[i].left[0] + cx[1]*cos(targ_traj->con_sched[i].left[3]);
+			foot.ub.y_m = targ_traj->con_sched[i].left[1] + cx[1]*sin(targ_traj->con_sched[i].left[3]);
+			plan_foot_pos.push_back(foot);
+			foot.lb.x_m = targ_traj->con_sched[i].right[0] + cx[0]*cos(targ_traj->con_sched[i].right[3]);
+			foot.lb.y_m = targ_traj->con_sched[i].right[1] + cx[0]*sin(targ_traj->con_sched[i].right[3]);
+			foot.ub.x_m = targ_traj->con_sched[i].right[0] + cx[1]*cos(targ_traj->con_sched[i].right[3]);
+			foot.ub.y_m = targ_traj->con_sched[i].right[1] + cx[1]*sin(targ_traj->con_sched[i].right[3]);
+			plan_foot_pos.push_back(foot);
+		}
+		m_bPlanInit = true;
+	}
+
 	void SetMPCDisplay(int run_time);
 
 private:
@@ -59,6 +91,7 @@ private:
 	void profilerShowMPC(mjrRect viewport);
 	void profilerInit();
 	void DrawTrajPoints(mjData* data);
+	void DrawMPCPlan(mjData* data, telemetry_t t);
 
 	mjvFigure figCOMxdd;
 	mjvFigure figLeftxdd;

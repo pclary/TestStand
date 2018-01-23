@@ -32,13 +32,17 @@ typedef enum {
 
 #pragma pack(push, 1)
 typedef struct {
-	uint8_t op_mode;
+	OP_STATE eOpState;
 	uint32_t run_count;
-	int32_t x_mm[nX];
-	int32_t com[4];
-	int32_t com_vel[4];
-	int32_t left[4];
-	int32_t right[4];
+	double qpos[nX];
+	double com[4];
+	double com_vel[4];
+	double left[4];
+	double right[4];
+	double xT[3];
+	double step_height;
+	double step_time;
+	double ds_perc;
 }StateInfo_Struct;
 #pragma pack(pop)
 
@@ -79,17 +83,17 @@ typedef struct {
 } USER_Params;
 #pragma pack(pop)
 
-};
 
 #pragma pack(push, 1)
 typedef struct {
-	CommandInterface::StateInfo_Struct state;
-	CommandInterface::USER_Params usr_cmd;
-	CommandInterface::ROM_TargTraj_Struct trajInfo;
-	CommandInterface::ROM_TrajPt_Struct posTraj[MAX_TRAJ_PTS];
-	CommandInterface::ContactInfo_Struct conSched[MAX_CON_SWITCH];
-}CommAction_Struct;
+	PHASE_Info phases[MAX_NUM_PHASES];
+	double x[25*MAX_NUM_PHASES];
+	int num_phases;
+	unsigned int run_count;
+} policy_params_t;
 #pragma pack(pop)
+
+};
 
 typedef struct {
 	uint8_t con_state;
@@ -113,6 +117,13 @@ typedef struct {
 	std::vector<ROM_TrajPt_Struct> com_traj;
 	std::vector<ContactInfo_Struct> con_sched;
 }ROM_Policy_Struct;
+
+typedef struct {
+	double com[4];
+	double com_vel[4];
+	double left[4];
+	double right[4];
+} rom_state_t;
 
 
 //#pragma pack(push, 1)

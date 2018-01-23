@@ -13,6 +13,12 @@ typedef enum {
 } PHASE_STATE;
 
 typedef struct {
+	PHASE_STATE eType;
+	double T;
+} PHASE_Info;
+
+
+typedef struct {
 	double x_m;
 	double y_m;
 } Point;

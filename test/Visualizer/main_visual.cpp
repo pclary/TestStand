@@ -21,7 +21,9 @@ using namespace std;
 std::mutex mut;
 std::condition_variable cv;
 
+bool bProcMessage = false;
 bool bReadyToCopyTraj = true;
+bool bCopiedTraj = false;
 CommandInterface::policy_params_t params;
 ROM_Policy_Struct targ_traj;
 
@@ -29,15 +31,19 @@ void receive_policy(udp_comms* comms, MPC_OPTIONS* opt)
 {
 	while (true)
 	{
-		printf("waiting to recieve!\n");
+		bProcMessage = true;
 		comms->receive_policy_params(&params);
-		printf("received params!\n");
+		bProcMessage = false;
+
 		// Wait until the main process is ready for the new trajectory
 		std::unique_lock<std::mutex> lk(mut);
 		cv.wait(lk, []{return bReadyToCopyTraj;});
 
 		opt->GetSolution(params.x, params.phases, params.num_phases, &targ_traj, 0.01);
 
+		bCopiedTraj = true;
+		lk.unlock();
+		cv.notify_one();
 	}
 }
 
@@ -70,12 +76,6 @@ int main(int argc,char* argv[]) {
 		return -1;
 	}
 
-	while (true)
-	{
-		comms_planner->receive_policy_params(&params);
-		printf("received params\n");
-	}
-
 	MPC_OPTIONS* opt = new MPC_OPTIONS();
 
 	thread commThread = thread(&receive_policy, comms_planner, opt);
@@ -102,10 +102,22 @@ int main(int argc,char* argv[]) {
 
 		mj_forward(mj_Model, mj_Data);
 
-		bReadyToCopyTraj = false;
-		vis->SetMPCPlan(&targ_traj);
-		bReadyToCopyTraj = true;
-		cv.notify_one();
+		{
+			std::lock_guard<std::mutex> lk(mut);
+
+			if (!bProcMessage)
+			{
+				bReadyToCopyTraj = true;
+				cv.notify_one();
+			}
+		}
+		if (!bProcMessage)
+		{
+			std::unique_lock<std::mutex> lk(mut);
+			cv.wait(lk, []{return bCopiedTraj;});
+			vis->SetMPCPlan(&targ_traj);
+			bReadyToCopyTraj = false;
+		}
 		vis->Draw(mj_Data, telem);
 	}
 

@@ -44,6 +44,7 @@ Cassie::Cassie() {
 	m_bVisConn = true;
 	m_bPlanConn = true;
 	m_bNewPlan = false;
+	m_bProcMessage = false;
 
 	logFile.open("logfile.csv");
 
@@ -100,23 +101,31 @@ void Cassie::UpdateController(ControlObjective cntrl, Eigen::Matrix<double, nU, 
 	rightFoot.stepTime_s += m_dDeltaTime_s;
 	state_info.run_count++;
 
+	{
+		std::lock_guard<std::mutex> lk(mut);
+		if (!m_bProcMessage)
+		{
+			m_bReadyToCopyTraj = true;
+			cv.notify_one();
+		}
+	}
+	if (!m_bProcMessage)
+	{
+		std::unique_lock<std::mutex> lk2(m);
+		cv.wait(lk2, std::bind(&Cassie::isTrajCopied, this));
+		m_bReadyToCopyTraj = false;
+		m_bNewPlan = true;
+	}
+
 	if (m_bNewPlan)
 	{
-		m_bReadyToCopyTraj = true;
-		// Wait until the main process is ready for the new trajectory
-		std::unique_lock<std::mutex> lk(mut);
-		cv.wait(lk, []{return m_bTrajCopied;});
-
-		m_bReadyToCopyTraj = false;
-		m_bNewPlan = false;
-
 		planTime_s = double(state_info.run_count - targ_traj.run_count)*0.0005;
 		nActiveIndex = 0;
 	}
 
 	static CommandInterface::OP_STATE ePrevOpState = state_info.eOpState;
 
-	if ((state_info.eOpState != CommandInterface::Idle && state_info.eOpState != CommandInterface::Standing) || bNewTraj)
+	if ((state_info.eOpState != CommandInterface::Idle && state_info.eOpState != CommandInterface::Standing) || m_bNewPlan)
 	{
 		for (int i = 0; i < targ_traj.numContactSwitch; i++)
 		{
@@ -179,6 +188,8 @@ void Cassie::UpdateController(ControlObjective cntrl, Eigen::Matrix<double, nU, 
 		break;
 
 	}
+
+	m_bNewPlan = false;
 
 }
 
@@ -618,20 +629,27 @@ void Cassie::PlannerThread()
 	//just wait until a new trajectory is received
 	while (true)
 	{
+		m_bProcMessage = true;
 		CommandInterface::policy_params_t params;
 		comms_planner->receive_policy_params(&params);
+		m_bProcMessage = false;
+
+
+
 		m_bNewPlan = true;
 
 		m_bTrajCopied = false;
 		// Wait until the main process is ready for the new trajectory
 		std::unique_lock<std::mutex> lk(mut);
-		cv.wait(lk, []{return m_bReadyToCopyTraj;});
+		cv.wait(lk, std::bind(&Cassie::isReadyToCopy, this));
 
 		policy_opt->GetSolution(params.x, params.phases, params.num_phases, &targ_traj, 5e-3);
 
 		targ_traj.run_count = params.run_count;
 
 		m_bTrajCopied = true;
+		lk.unlock();
+		cv.notify_one();
 
 	}
 }

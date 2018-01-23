@@ -12,9 +12,6 @@
 #include "CommandInterface.h"
 #include <fstream>
 #include "udp_comms.h"
-#include <thread>
-#include <mutex>
-#include <condition_variable>
 
 
 #define LOGGING false
@@ -28,6 +25,7 @@ public:
 	void Run();
 
 	bool isReady() { return bReadyToCopyState; };
+	bool isCopied() { return m_bStateCopied; };
 
 private:
 	CommandInterface::StateInfo_Struct state_info;
@@ -39,14 +37,7 @@ private:
 
 	Ipopt::MPC mpc;
 
-	std::mutex mut;
-	std::condition_variable cv;
-
 	MPC_OPTIONS* opt;
-
-	bool bReadyToCopyState;
-
-	std::thread commThread;
 
 	bool UpdateContactSchedule();
 

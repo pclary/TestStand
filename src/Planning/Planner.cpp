@@ -15,9 +15,6 @@ Planner::Planner() {
 	opt = new MPC_OPTIONS();
 	mpc.Init();
 
-	bReadyToCopyState = true;
-	cv.notify_one();
-
 #if LOGGING
 	fileTraj.open("traj.csv", std::ofstream::out);
 #endif
@@ -47,9 +44,6 @@ bool Planner::Init() {
 		return false;
 	}
 
-
-	commThread = thread(&Planner::ReceiveState, this);
-
 	return true;
 
 }
@@ -63,7 +57,6 @@ void Planner::Run()
 		mpc.GetParams(&policy_params);
 		comms->send_policy_params(policy_params);
 		comms_vis->send_policy_params(policy_params);
-		printf("SENT PARAMS!\n");
 	}
 }
 
@@ -71,7 +64,7 @@ bool Planner::Update() {
 
 	//step timing.... target pos... etc
 
-	bReadyToCopyState = false;
+	comms->receive_state_info(&state_info);
 
 	policy_params.run_count = state_info.run_count;
 
@@ -94,9 +87,6 @@ bool Planner::Update() {
 
 	//if the contact schedule doesn't change from previous then a warmstart is simple
 	bool bWarmStart = UpdateContactSchedule();
-
-	bReadyToCopyState = true;
-	cv.notify_one();
 
 	mpc.SetProblem(opt, bWarmStart);
 
@@ -211,22 +201,6 @@ bool Planner::UpdateContactSchedule()
 	last_rcv_run_count = state_info.run_count;
 
 	return bWarmStart;
-}
-
-void Planner::ReceiveState()
-{
-	while (true)
-	{
-		CommandInterface::StateInfo_Struct temp_info;
-		comms->receive_state_info(&temp_info);
-
-		// Wait until the main process is ready for the new trajectory
-		std::unique_lock<std::mutex> lk(mut);
-//		cv.wait(lk, []{return bReadyToCopyState;});
-		cv.wait(lk, std::bind(&Planner::isReady, this));
-
-		state_info = temp_info;
-	}
 }
 
 #if LOGGING

@@ -55,6 +55,9 @@ public:
 	void SetStanceZGains(double kp, double kd) { PD_StanceZ.Kp = kp; PD_StanceZ.Kd = kd; }
 	void SetJointGains(double kp, double kd) { PD_Pitch.Kp = kp; PD_Pitch.Kd = kd; }
 
+	bool isTrajCopied() { return m_bTrajCopied; };
+	bool isReadyToCopy() { return m_bReadyToCopyTraj; }
+
 private:
 
 	void UpdateStateEstimate();
@@ -122,6 +125,7 @@ private:
 	bool m_bVisConn;
 	bool m_bPlanConn;
 	bool m_bNewPlan;
+	bool m_bProcMessage;
 
 	int targetIds[XDD_TARGETS];
 

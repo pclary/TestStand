@@ -41,6 +41,14 @@ Cassie::Cassie() {
 	for (int i = 0; i < nQ; i++)
 		qpos[i] = qvel[i] = 0.0;
 
+	targ_traj.dt_c = 0.0;
+	ROM_TrajPt_Struct null;
+	for (int i = 0; i < MAX_TRAJ_PTS; i++)
+			targ_traj.com_traj.push_back(null);
+	ContactInfo_Struct null_con;
+	for (int i = 0; i < MAX_CON_SWITCH; i++)
+			targ_traj.con_sched.push_back(null_con);
+
 	m_bVisConn = true;
 	m_bPlanConn = true;
 	m_bNewPlan = false;
@@ -136,8 +144,8 @@ void Cassie::UpdateController(ControlObjective cntrl, Eigen::Matrix<double, nU, 
 					state_info.eOpState = CommandInterface::Walking_DS;
 					for (int j = 0; j < 4; j++)
 					{
-						leftFoot.start_pos[j] = left[j];
-						rightFoot.start_pos[j] = right[j];
+						leftFoot.start_pos[j] = state_info.left[j];
+						rightFoot.start_pos[j] = state_info.right[j];
 					}
 				}
 				else if (targ_traj.con_sched[i].con_state == SS_Left)
@@ -151,7 +159,7 @@ void Cassie::UpdateController(ControlObjective cntrl, Eigen::Matrix<double, nU, 
 							rightFoot.start_pos[j] = targ_traj.con_sched[i].right[j];
 					}
 					for (int j = 0; j < 4; j++)
-						leftFoot.start_pos[j] = rom_state.left[j];
+						leftFoot.start_pos[j] = state_info.left[j];
 				}
 				else if (targ_traj.con_sched[i].con_state == SS_Right)
 				{
@@ -164,7 +172,7 @@ void Cassie::UpdateController(ControlObjective cntrl, Eigen::Matrix<double, nU, 
 							leftFoot.start_pos[j] = targ_traj.con_sched[i].left[j];
 					}
 					for (int j = 0; j < 4; j++)
-						rightFoot.start_pos[j] = rom_state.right[j];
+						rightFoot.start_pos[j] = state_info.right[j];
 				}
 
 				nActiveIndex = i;
@@ -303,7 +311,7 @@ bool Cassie::Run(ControlObjective cntrl, double* bRadio)
 
 void Cassie::GetCOMTarget(double* com_targ, double* com_ff)
 {
-	int N = int(planTime_s / targ_traj->dt_c);
+	int N = int(planTime_s / targ_traj.dt_c);
 	if (N > MAX_TRAJ_PTS-1)
 	{
 		//		printf("youre fucked!\n");
@@ -311,11 +319,11 @@ void Cassie::GetCOMTarget(double* com_targ, double* com_ff)
 	}
 
 	for (int i = 0; i < 4; i++)
-		com_targ[i] = targ_traj->com_traj[N].com[i];
+		com_targ[i] = targ_traj.com_traj[N].com[i];
 	for (int i = 0; i < 4; i++)
-		com_targ[i+4] = (targ_traj->com_traj[N+1].com[i] - targ_traj->com_traj[N-1].com[i])/(2*targ_traj->dt_c);
+		com_targ[i+4] = (targ_traj.com_traj[N+1].com[i] - targ_traj.com_traj[N-1].com[i])/(2*targ_traj.dt_c);
 	for (int i = 0; i < 4; i++)
-		com_ff[i] = targ_traj->com_traj[N].com_xdd[i];
+		com_ff[i] = targ_traj.com_traj[N].com_xdd[i];
 
 }
 
@@ -323,9 +331,9 @@ void Cassie::GetCOMTarget(double* com_targ, double* com_ff)
 void Cassie::GetSwingFootFF(double* cur_pos, double* cur_vel, swing_foot_plan_t swing_foot, double* ff_accel)
 {
 	double t, T;
-	Matrix2d A = Matrix2d::Zero();
-	Vector2d b = Vector2d::Zero();
-	Vector2d ab = Vector2d::Zero();
+	Eigen::Matrix2d A = Eigen::Matrix2d::Zero();
+	Eigen::Vector2d b = Eigen::Vector2d::Zero();
+	Eigen::Vector2d ab = Eigen::Vector2d::Zero();
 
 	double targ[] = {0.0, 0.0, 0.0};
 	double vel_targ[] = {0.0, 0.0, 0.0};
@@ -390,24 +398,25 @@ void Cassie::WalkingController(ControlObjective cntrl, Eigen::Matrix<double, nU,
 	double com_targ[8], com_ff[4];
 	GetCOMTarget(com_targ, com_ff);
 
-	for (int i = 0; i < 3; i++)
-	{
-		xdd(i,0) = PD_COM.Kp*(com_targ[i] - x(i)) + PD_COM.Kd*(com_targ[i+4] - xd(i));
-		xdd(i,0) += com_ff[i];
-	}
+	xdd(0,0) = PD_COM_X.Kp*(com_targ[0] - x(0)) + PD_COM_X.Kd*(com_targ[4] - xd(0));
+	xdd(0,0) += com_ff[0];
+	xdd(1,0) = PD_COM_Y.Kp*(com_targ[1] - x(1)) + PD_COM_Y.Kd*(com_targ[5] - xd(1));
+	xdd(1,0) += com_ff[1];
+	xdd(2,0) = PD_COM_Z.Kp*(com_targ[2] - x(2)) + PD_COM_Z.Kd*(com_targ[6] - xd(2));
+	xdd(2,0) += com_ff[2];
 
-	const double* targ_left = targ_traj->con_sched[nActiveIndex].left;
-	const double* targ_right = targ_traj->con_sched[nActiveIndex].right;
+	const double* targ_left = targ_traj.con_sched[nActiveIndex].left;
+	const double* targ_right = targ_traj.con_sched[nActiveIndex].right;
 
-	if (targ_traj->con_sched[nActiveIndex].con_state == SS_Left)
+	if (targ_traj.con_sched[nActiveIndex].con_state == SS_Left)
 	{
 		bDesiredContact[2] = bDesiredContact[3] = false;
 		//left stance
 		for (int i = 0; i < 2; i++)
 		{
-			xdd(3+DOF*i,0) = -PD_Stance.Kd*xd(3+DOF*i);
-			xdd(4+DOF*i,0) = -PD_Stance.Kd*xd(4+DOF*i);
-			xdd(5+DOF*i,0) = PD_Stance.Kp*(-5e-3 - x(5+DOF*i)) + PD_Stance.Kd*(0.0 - xd(5+DOF*i));
+			xdd(3+DOF*i,0) = -PD_StanceXY.Kd*xd(3+DOF*i);
+			xdd(4+DOF*i,0) = -PD_StanceXY.Kd*xd(4+DOF*i);
+			xdd(5+DOF*i,0) = PD_StanceZ.Kp*(-5e-3 - x(5+DOF*i)) + PD_StanceZ.Kd*(0.0 - xd(5+DOF*i));
 		}
 		double cur_pos[3];
 		double cur_vel[3];
@@ -425,7 +434,7 @@ void Cassie::WalkingController(ControlObjective cntrl, Eigen::Matrix<double, nU,
 			xdd(5+DOF*i,0) = ff_accel[2];
 		}
 	}
-	else if (targ_traj->con_sched[nActiveIndex].con_state == SS_Right)
+	else if (targ_traj.con_sched[nActiveIndex].con_state == SS_Right)
 	{
 		bDesiredContact[0] = bDesiredContact[1] = false;
 
@@ -448,9 +457,9 @@ void Cassie::WalkingController(ControlObjective cntrl, Eigen::Matrix<double, nU,
 		//right stance
 		for (int i = 2; i < 4; i++)
 		{
-			xdd(3+DOF*i,0) = -PD_Stance.Kd*xd(3+DOF*i);
-			xdd(4+DOF*i,0) = -PD_Stance.Kd*xd(4+DOF*i);
-			xdd(5+DOF*i,0) = PD_Stance.Kp*(-5e-3 - x(5+DOF*i)) + PD_Stance.Kd*(0.0 - xd(5+DOF*i));
+			xdd(3+DOF*i,0) = -PD_StanceXY.Kd*xd(3+DOF*i);
+			xdd(4+DOF*i,0) = -PD_StanceXY.Kd*xd(4+DOF*i);
+			xdd(5+DOF*i,0) = PD_StanceZ.Kp*(-5e-3 - x(5+DOF*i)) + PD_StanceZ.Kd*(0.0 - xd(5+DOF*i));
 		}
 	}
 	else
@@ -458,9 +467,9 @@ void Cassie::WalkingController(ControlObjective cntrl, Eigen::Matrix<double, nU,
 		//right stance
 		for (int i = 0; i < 4; i++)
 		{
-			xdd(3+DOF*i,0) = -PD_Stance.Kd*xd(3+DOF*i);
-			xdd(4+DOF*i,0) = -PD_Stance.Kd*xd(4+DOF*i);
-			xdd(5+DOF*i,0) = PD_Stance.Kp*(-5e-3 - x(5+DOF*i)) + PD_Stance.Kd*(0.0 - xd(5+DOF*i));
+			xdd(3+DOF*i,0) = -PD_StanceXY.Kd*xd(3+DOF*i);
+			xdd(4+DOF*i,0) = -PD_StanceXY.Kd*xd(4+DOF*i);
+			xdd(5+DOF*i,0) = PD_StanceZ.Kp*(-5e-3 - x(5+DOF*i)) + PD_StanceZ.Kd*(0.0 - xd(5+DOF*i));
 		}
 	}
 
@@ -484,16 +493,27 @@ void Cassie::WalkingController(ControlObjective cntrl, Eigen::Matrix<double, nU,
 		stats.xd[i] = qvel[3 + i - XDD_TARGETS*DOF];
 	}
 
+	for (int i = 0; i < 3; i++)
+	{
+		state_info.com[i] = x(i);
+		state_info.com_vel[i] = xd(i);
+		state_info.left[i] = (x(i+3) + x(i+6))/2.0;
+		state_info.right[i] = (x(i+9) + x(i+12))/2.0;
+	}
+	state_info.com[3] = euler[2];
+	state_info.com_vel[3] = qvel[5];
+	state_info.left[3] = atan2(x(4)-x(7),x(3)-x(6));
+	state_info.right[3] = atan2(x(10)-x(13),x(9)-x(12));
 
 	osc->RunPTSC(&dyn_model, &dyn_state, xdd, bActive, bDesiredContact, u);
 
 
 	for (int i = 0; i < nU; i++)
-		stats.torques[i] = telem->torques[i] = (*u)(i,0);
+		stats.torques[i] = telem.torques[i] = (*u)(i,0);
 	for (int i = 0; i < XDD_TARGETS*DOF; i++)
 	{
-		telem->accels[i] = xdd(i);
-		telem->targ_pos[i] = x_t(i);
+		telem.accels[i] = xdd(i);
+		telem.targ_pos[i] = x_t(i);
 	}
 	for (int i = 0; i < XDD_TARGETS*DOF+QDD_TARGETS; i++)
 	{
@@ -610,11 +630,11 @@ void Cassie::StandingController(ControlObjective cntrl, Eigen::Matrix<double, nU
 	//	printf("\n");
 
 	for (int i = 0; i < nU; i++)
-		stats.torques[i] = telem->torques[i] = (*u)(i,0);
+		stats.torques[i] = telem.torques[i] = (*u)(i,0);
 	for (int i = 0; i < XDD_TARGETS*DOF; i++)
 	{
-		telem->accels[i] = xdd(i);
-		telem->targ_pos[i] = x_t(i);
+		telem.accels[i] = xdd(i);
+		telem.targ_pos[i] = x_t(i);
 	}
 	for (int i = 0; i < XDD_TARGETS*DOF+QDD_TARGETS; i++)
 	{

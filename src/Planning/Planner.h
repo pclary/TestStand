@@ -24,9 +24,6 @@ public:
 	bool Init();
 	void Run();
 
-	bool isReady() { return bReadyToCopyState; };
-	bool isCopied() { return m_bStateCopied; };
-
 private:
 	CommandInterface::StateInfo_Struct state_info;
 

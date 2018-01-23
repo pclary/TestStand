@@ -9,6 +9,7 @@
 #define COMMANDINTERFACE_H_
 
 #include "SharedRobotDefinitions.h"
+#include <vector>
 
 #define MAX_TRAJ_PTS 500
 #define MAX_CON_SWITCH 40

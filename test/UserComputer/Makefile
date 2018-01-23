@@ -2,6 +2,7 @@ HOMEDIR := /home/drl/workspace
 QPDIR := $(HOMEDIR)/ThirdParty/qpOASES-3.2.1
 EIGENDIR := $(HOMEDIR)/ThirdParty/eigen
 RBDLDIR := $(HOMEDIR)/ThirdParty/rbdl
+IPOPTDIR := $(HOMEDIR)/ThirdParty/Ipopt-3.12.8
 
 HEADDIR := $(HOMEDIR)/TestStand
 SRCDIR := $(HEADDIR)/src
@@ -13,6 +14,8 @@ CONFIGDIR := $(SRCDIR)/Configuration
 MODPINDIR := $(CONFIGDIR)/SingleLeg_Pinned
 MODFBDIR := $(CONFIGDIR)/SingleLeg_FB
 MODCASSIEDIR := $(CONFIGDIR)/Cassie_Stiff
+PLANDIR := $(SRCDIR)/Planning
+SLIPDIR := $(PLANDIR)/NLP/S_LIP
 
 MODDIR := $(HEADDIR)/test/UserComputer
 
@@ -34,7 +37,7 @@ SHAREDLIBS = -lm -L$(COMMLIBDIR) -lCassieUDP
 MAINLIBS = -L$(QPDIR)/bin -L$(RBDLDIR)/build -L$(COMMLIBDIR) -lrbdl -lqpOASES $(QPDIR)/src/LAPACKReplacement.o $(QPDIR)/src/BLASReplacement.o $(SHAREDLIBS)
 
 # Additional flags for compilation (e.g., include flags)
-SHAREDINCFLAGS = -I$(SRCDIR) -I$(COMMONDIR) -I$(COMMDIR) -I$(COMMLIBDIR) -I$(CTRLDIR) -I$(CONFIGDIR) -I$(EIGENDIR)
+SHAREDINCFLAGS = -I$(SRCDIR) -I$(COMMONDIR) -I$(COMMDIR) -I$(COMMLIBDIR) -I$(CTRLDIR) -I$(CONFIGDIR) -I$(EIGENDIR)  -I$(PLANDIR) -I$(SLIPDIR) -I$(IPOPTDIR)/include/coin
 MAININCFLAGS = -I$(QPDIR)/include -I$(RBDLDIR)/src -I$(RBDLDIR)/include -I$(RBDLDIR)/build/include $(SHAREDINCFLAGS)
 
 ##########################################################################
@@ -46,7 +49,7 @@ MAININCFLAGS = -I$(QPDIR)/include -I$(RBDLDIR)/src -I$(RBDLDIR)/include -I$(RBDL
 CXX = g++
 
 # C++ Compiler options
-CXXFLAGS = -std=c++11 -O3 -pipe -DNDEBUG -Wl,-rpath,$(COMMLIBDIR),-rpath,$(RBDLDIR)/build,-rpath,$(QPDIR)/bin -Wparentheses -Wreturn-type -Wpointer-arith -Wwrite-strings -Wno-unknown-pragmas -Wno-long-long -fPIC -DLINUX -D__USE_LONG_INTEGERS__ -D__USE_LONG_FINTS__ -DSOLVER_NONE -D__NO_COPYRIGHT__ -DEMBEDDED
+CXXFLAGS = -std=c++11 -O3 -pipe -DNDEBUG -Wl,-rpath,$(COMMLIBDIR),-rpath,$(RBDLDIR)/build,-rpath,$(QPDIR)/bin -Wparentheses -Wreturn-type -Wpointer-arith -Wwrite-strings -Wno-unknown-pragmas -Wno-long-long -fPIC -DLINUX -D__USE_LONG_INTEGERS__ -D__USE_LONG_FINTS__ -DSOLVER_NONE -D__NO_COPYRIGHT__ -DEMBEDDED -pthread
 
 # The following is necessary under cygwin, if native compilers are used
 CYGPATH_W = echo
@@ -81,15 +84,15 @@ cassie: cassie_main
 
 cassie_main: INCL := -I$(MODCASSIEDIR) $(MAININCFLAGS)
 cassie_main: LIBS := $(MAINLIBS)
-cassie_main: MAINOBJS := $(MAINOBJS) $(MODCASSIEDIR)/TestBenchInterface.o
-cassie_main: $(MODCASSIEDIR)/TestBenchInterface.o
+cassie_main: MAINOBJS := $(MAINOBJS) $(MODCASSIEDIR)/Cassie.o
+cassie_main: $(MODCASSIEDIR)/Cassie.o
 cassie_main: $(MAINOBJS)
 	bla=;\
 	for file in $(MAINOBJS); do bla="$$bla `$(CYGPATH_W) $$file`"; done; \
 	$(CXX) $(MODDIR)/main_cassie.cpp $(CXXFLAGS) $(INCL) -o $(OUTDIR)/main $$bla $(LIBS)
 
 clean:
-	rm -rf $(OUTDIR)/main $(OBJS) $(MODPINDIR)/TestBenchInterface.o $(MODFBDIR)/TestBenchInterface.o $(MODCASSIEDIR)/TestBenchInterface.o
+	rm -rf $(OUTDIR)/main $(OBJS) $(MODPINDIR)/TestBenchInterface.o $(MODFBDIR)/TestBenchInterface.o $(MODCASSIEDIR)/Cassie.o
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) $(INCL) -c -o $@ $<

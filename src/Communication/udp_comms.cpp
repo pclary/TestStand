@@ -205,6 +205,13 @@ bool udp_comms::receive_policy_params(CommandInterface::policy_params_t* s)
 	return true;
 }
 
+bool udp_comms::rcv_data_available()
+{
+	struct pollfd fd;
+	fd.fd = sock; fd.events = POLLIN; fd.revents = 0;
+	return (poll(&fd, 1, 0) > 0);
+}
+
 bool udp_comms::receive(unsigned char* buff, unsigned int num_bytes)
 {
 //	printf("Receiving: %u bytes\n", num_bytes);

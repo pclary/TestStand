@@ -30,6 +30,7 @@ private:
     bool receive(unsigned char* buff, unsigned int num_bytes);
     bool transmit(unsigned char* buff, unsigned int numBytes);
 
+
     sockaddr_in make_sockaddr_in(const char *addr_str, unsigned short port);
 
     unsigned int PORT;
@@ -39,6 +40,8 @@ private:
 public:
     udp_comms(std::string local_addr, std::string remote_addr, unsigned int port);
     bool conn();
+
+    bool rcv_data_available();
 
     bool receive_cassie_outputs(cassie_out_t* data);
     bool receive_cassie_inputs(cassie_user_in_t* data);

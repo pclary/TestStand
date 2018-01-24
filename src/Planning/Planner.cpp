@@ -51,7 +51,6 @@ bool Planner::Init() {
 void Planner::Run()
 {
 	bool bSuccess = Update();
-	bSuccess = true;
 	if (bSuccess)
 	{
 		mpc.GetParams(&policy_params);
@@ -64,7 +63,7 @@ bool Planner::Update() {
 
 	//step timing.... target pos... etc
 
-//	comms->receive_state_info(&state_info);
+	comms->receive_state_info(&state_info);
 
 	policy_params.run_count = state_info.run_count;
 

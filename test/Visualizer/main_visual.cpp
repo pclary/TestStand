@@ -27,25 +27,25 @@ bool bCopiedTraj = false;
 CommandInterface::policy_params_t params;
 ROM_Policy_Struct targ_traj;
 
-void receive_policy(udp_comms* comms, MPC_OPTIONS* opt)
-{
-	while (true)
-	{
-		bProcMessage = true;
-		comms->receive_policy_params(&params);
-		bProcMessage = false;
-
-		// Wait until the main process is ready for the new trajectory
-		std::unique_lock<std::mutex> lk(mut);
-		cv.wait(lk, []{return bReadyToCopyTraj;});
-
-		opt->GetSolution(params.x, params.phases, params.num_phases, &targ_traj, 0.01);
-
-		bCopiedTraj = true;
-		lk.unlock();
-		cv.notify_one();
-	}
-}
+//void receive_policy(udp_comms* comms, MPC_OPTIONS* opt)
+//{
+//	while (true)
+//	{
+//		bProcMessage = true;
+//		comms->receive_policy_params(&params);
+//		bProcMessage = false;
+//
+//		// Wait until the main process is ready for the new trajectory
+//		std::unique_lock<std::mutex> lk(mut);
+//		cv.wait(lk, []{return bReadyToCopyTraj;});
+//
+//		opt->GetSolution(params.x, params.phases, params.num_phases, &targ_traj, 0.01);
+//
+//		bCopiedTraj = true;
+//		lk.unlock();
+//		cv.notify_one();
+//	}
+//}
 
 int main(int argc,char* argv[]) {
 
@@ -87,8 +87,6 @@ int main(int argc,char* argv[]) {
 	for (int i = 0; i < MAX_CON_SWITCH; i++)
 		targ_traj.con_sched.push_back(null_con);
 
-	thread commThread = thread(&receive_policy, comms_planner, opt);
-
 	mj_activate("../../ThirdParty/mjpro150/mjkey.txt");
 	char error[1000] = "Could not load binary model";
 	mjModel* mj_Model = mj_loadXML(xml_model_filename.c_str(), 0, error, 1000);
@@ -106,27 +104,34 @@ int main(int argc,char* argv[]) {
 	while (true) {
 		comms->receive_telemetry(&telem);
 
+		if (comms_planner->rcv_data_available())
+		{
+			comms_planner->receive_policy_params(&params);
+			opt->GetSolution(params.x, params.phases, params.num_phases, &targ_traj, 0.01);
+			vis->SetMPCPlan(&targ_traj);
+		}
+
 		for (int i = 0; i < nX; i++)
 			mj_Data->qpos[i] = telem.qpos[i];
 
 		mj_forward(mj_Model, mj_Data);
 
-		{
-			std::lock_guard<std::mutex> lk(mut);
-
-			if (!bProcMessage)
-			{
-				bReadyToCopyTraj = true;
-				cv.notify_one();
-			}
-		}
-		if (!bProcMessage)
-		{
-			std::unique_lock<std::mutex> lk(mut);
-			cv.wait(lk, []{return bCopiedTraj;});
-			vis->SetMPCPlan(&targ_traj);
-			bReadyToCopyTraj = false;
-		}
+//		{
+//			std::lock_guard<std::mutex> lk(mut);
+//
+//			if (!bProcMessage)
+//			{
+//				bReadyToCopyTraj = true;
+//				cv.notify_one();
+//			}
+//		}
+//		if (!bProcMessage)
+//		{
+//			std::unique_lock<std::mutex> lk(mut);
+//			cv.wait(lk, []{return bCopiedTraj;});
+//			vis->SetMPCPlan(&targ_traj);
+//			bReadyToCopyTraj = false;
+//		}
 		vis->Draw(mj_Data, telem);
 	}
 

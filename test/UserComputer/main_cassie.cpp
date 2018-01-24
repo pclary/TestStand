@@ -5,7 +5,7 @@
  *      Author: tapgar
  */
 
-#include "TestBenchInterface.h"
+#include "Cassie.h"
 
 void profileLineZ(ControlObjective* cntrl, double t)
 {
@@ -32,7 +32,7 @@ void profileSetPoint(ControlObjective* cntrl, double* bRadio)
 
 int main() {
 
-	TestBenchInterface robot;
+	Cassie robot;
 
 	if (!robot.Init())
 	{

@@ -52,11 +52,13 @@ Cassie::Cassie() {
 	m_bVisConn = true;
 	m_bPlanConn = true;
 	m_bNewPlan = false;
-	m_bProcMessage = false;
 
 	logFile.open("logfile.csv");
 
 	state_info.run_count = 0;
+	state_info.step_height = 0.15;
+	state_info.step_time = 0.2;
+	state_info.ds_perc = 0.2;
 	state_info.eOpState = CommandInterface::Idle;
 
 	policy_opt = new MPC_OPTIONS();
@@ -96,9 +98,6 @@ bool Cassie::Init() {
 
 	osc->InitMatrices(&dyn_model);
 
-	if (m_bPlanConn)
-		planCommThread = thread(&Cassie::PlannerThread, this);
-
 	return true;
 }
 
@@ -109,20 +108,13 @@ void Cassie::UpdateController(ControlObjective cntrl, Eigen::Matrix<double, nU, 
 	rightFoot.stepTime_s += m_dDeltaTime_s;
 	state_info.run_count++;
 
+	if (false)//comms_planner->rcv_data_available())
 	{
-		std::lock_guard<std::mutex> lk(mut);
-		if (!m_bProcMessage)
-		{
-			m_bReadyToCopyTraj = true;
-			cv.notify_one();
-		}
-	}
-	if (!m_bProcMessage)
-	{
-		std::unique_lock<std::mutex> lk2(m);
-		cv.wait(lk2, std::bind(&Cassie::isTrajCopied, this));
-		m_bReadyToCopyTraj = false;
+		CommandInterface::policy_params_t params;
+		comms_planner->receive_policy_params(&params);
+		policy_opt->GetSolution(params.x, params.phases, params.num_phases, &targ_traj, 5e-4);
 		m_bNewPlan = true;
+		targ_traj.run_count = params.run_count;
 	}
 
 	if (m_bNewPlan)
@@ -611,6 +603,18 @@ void Cassie::StandingController(ControlObjective cntrl, Eigen::Matrix<double, nU
 		stats.xd[i] = qvel[3 + i - XDD_TARGETS*DOF];
 	}
 
+	for (int i = 0; i < 3; i++)
+	{
+		state_info.com[i] = x(i);
+		state_info.com_vel[i] = xd(i);
+		state_info.left[i] = (x(i+3) + x(i+6))/2.0;
+		state_info.right[i] = (x(i+9) + x(i+12))/2.0;
+	}
+	state_info.com[3] = euler[2];
+	state_info.com_vel[3] = qvel[5];
+	state_info.left[3] = atan2(x(4)-x(7),x(3)-x(6));
+	state_info.right[3] = atan2(x(10)-x(13),x(9)-x(12));
+
 	//	printf("Attitude\n");
 	//	printf("roll: %f\t%f\t%f\n", qpos[3], qvel[3], xdd(15,0));
 	//	printf("pitch: %f\t%f\t%f\n", qpos[4], qvel[4], xdd(16,0));
@@ -641,36 +645,6 @@ void Cassie::StandingController(ControlObjective cntrl, Eigen::Matrix<double, nU
 		stats.accels[i] = xdd(i);
 		stats.targ_pos[i] = x_t(i);
 		stats.targ_vel[i] = xd_t(i);
-	}
-}
-
-void Cassie::PlannerThread()
-{
-	//just wait until a new trajectory is received
-	while (true)
-	{
-		m_bProcMessage = true;
-		CommandInterface::policy_params_t params;
-		comms_planner->receive_policy_params(&params);
-		m_bProcMessage = false;
-
-
-
-		m_bNewPlan = true;
-
-		m_bTrajCopied = false;
-		// Wait until the main process is ready for the new trajectory
-		std::unique_lock<std::mutex> lk(mut);
-		cv.wait(lk, std::bind(&Cassie::isReadyToCopy, this));
-
-		policy_opt->GetSolution(params.x, params.phases, params.num_phases, &targ_traj, 5e-3);
-
-		targ_traj.run_count = params.run_count;
-
-		m_bTrajCopied = true;
-		lk.unlock();
-		cv.notify_one();
-
 	}
 }
 

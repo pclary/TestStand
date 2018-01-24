@@ -207,9 +207,9 @@ bool udp_comms::receive_policy_params(CommandInterface::policy_params_t* s)
 
 bool udp_comms::rcv_data_available()
 {
-	struct pollfd fd;
-	fd.fd = sock; fd.events = POLLIN; fd.revents = 0;
-	return (poll(&fd, 1, 0) > 0);
+	unsigned int available_bytes = 0;
+	ioctl(sock, FIONREAD, &available_bytes);
+	return (available_bytes > 0);
 }
 
 bool udp_comms::receive(unsigned char* buff, unsigned int num_bytes)

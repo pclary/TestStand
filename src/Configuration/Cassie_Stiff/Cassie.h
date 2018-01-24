@@ -18,11 +18,6 @@
 #include <fstream>
 #include "MPCOptions.h"
 
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-
-
 typedef struct {
 	double stepTime_s; //time offset into current step
 	double swingTime_s; //total swing duration (ie max stepTime_s)
@@ -71,9 +66,6 @@ private:
 
 	void logStats();
 
-	std::mutex mut;
-	std::condition_variable cv;
-
 	DynamicModel dyn_model;
 	DynamicState dyn_state;
 	OSC_RBDL* osc;
@@ -85,8 +77,6 @@ private:
 	CommandInterface::StateInfo_Struct state_info;
 
 	MPC_OPTIONS* policy_opt;
-
-	std::thread planCommThread;
 
 	ROM_Policy_Struct targ_traj;
 	swing_foot_plan_t leftFoot;

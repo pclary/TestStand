@@ -320,6 +320,16 @@ public:
 		ROM_TrajPt_Struct traj_pt;
 		ContactInfo_Struct con_info;
 
+		num_phases = n_phases;
+
+		omega = sqrt(stiffness/mass);
+		g_omega_2 = g/pow(omega, 2.0);
+		for (int i = 0; i < num_phases; i++)
+		{
+			cwT[i] = cos(phases[i].T*omega);
+			swT[i] = sin(phases[i].T*omega);
+		}
+
 		for (int i = 0; i < n_phases; i++)
 		{
 			PHASE_Params* s = (PHASE_Params*)(&(x[i*25]));

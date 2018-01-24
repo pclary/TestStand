@@ -84,6 +84,14 @@ bool Planner::Update() {
 	opt->xT[2] = opt->x0[2] + state_info.xT[2];
 	opt->xT[3] = opt->x0[3];
 
+	for (int i = 0; i < 14; i++)
+		printf("%f\t", opt->x0[i]);
+	printf("\n");
+
+	for (int i = 0; i < 8; i++)
+		printf("%f\t", opt->xT[i]);
+	printf("\n");
+
 	//if the contact schedule doesn't change from previous then a warmstart is simple
 	bool bWarmStart = UpdateContactSchedule();
 
